@@ -3,8 +3,12 @@ import { eabort } from "../helpers";
 export interface IDatabase {
     init(): Promise<boolean>;
     execute(sql: string, params: (string | number)[]): Promise<boolean>;
-    selectOne<T>(query: string, params: (string | number)[]): Promise<T | null>;
+    select<T>(table: string, key: string, value: string | number): Promise<T | null>; 
+    selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null>
     upsert(table: string, data: Record<string, string | number>): Promise<boolean>;
+
+    delete(table: string, key: string, value: string | number): Promise<boolean>;
+    deleteOr(table: string, data: Record<string, string | number>): Promise<boolean>;
 }
 
 /// AuthorizedRecord Structure

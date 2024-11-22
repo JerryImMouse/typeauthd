@@ -80,10 +80,20 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
-    async selectOne<T>(query: string, params: (string | number)[] = []): Promise<T | null> {
+    select<T>(table: string, key: string, value: string | number): Promise<T | null> {
+        return this.selectOrOnly(table, {[key]: value});
+    }
+
+    async selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
+        const columns = Object.keys(data);
+        const values = Object.values(data);
+
+        const conditions = columns.map((column, idx) => `${column} = $${idx + 1}`).join(" OR ");
+        const query = `SELECT * FROM ${table} WHERE ${conditions}`;
+
         try {
-            const result = await this._connection.query(query, params);
-    
+            const result = await this._connection.query(query, values);
+
             if (result.rows.length > 0) {
                 return result.rows[0] as T;
             } else {
@@ -92,6 +102,26 @@ export class PostgresDatabase implements IDatabase {
         } catch (err) {
             this._handleError(query, err);
             return null;
+        }
+    }
+
+    delete(table: string, key: string, value: string | number): Promise<boolean> {
+        return this.deleteOr(table, {[key]: value});
+    }
+
+    async deleteOr(table: string, data: Record<string, string | number>): Promise<boolean> {
+        const columns = Object.keys(data);
+        const values = Object.values(data);
+
+        const conditions = columns.map((column, idx) => `${column} = $${idx + 1}`).join(" OR ");
+        const query = `DELETE FROM ${table} WHERE ${conditions}`;
+
+        try {
+            await this._connection.query(query, values);
+            return true;
+        } catch (err) {
+            this._handleError(query, err);
+            return false;
         }
     }
 

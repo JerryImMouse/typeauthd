@@ -96,14 +96,43 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
-    selectOne<T>(sql: string, params: (string | number)[] = []): Promise<T | null> {
+    select<T>(table: string, key: string, value: string | number): Promise<T | null> {
+        return this.selectOrOnly(table, {[key]: value});
+    }
+
+    selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
+        const columns = Object.keys(data);
+        const values = Object.values(data);
+
+        const conditions = columns.map(column => `${column} = ?`).join(" OR ");
+        const query = `SELECT * FROM ${table} WHERE ${conditions}`;
+
         return new Promise((resolve, reject) => {
-            this._connection.get(sql, params, (err, row) => {
-                if (err && this._handleError(sql, err)) {
-                    process.exit(1);
+            this._connection.get(query, values, (err, row) => {
+                if (!this._handleError(query, err)) {
+                    reject(false);
+                    return;
                 }
 
-                resolve(row ? (row as T) : null);
+                resolve(row ? row as T : null);
+            })
+        })
+    }
+
+    delete(table: string, key: string, value: string | number): Promise<boolean> {
+        return this.deleteOr(table, {[key]: value});
+    }
+
+    deleteOr(table: string, data: Record<string, string | number>): Promise<boolean> {
+        const columns = Object.keys(data);
+        const values = Object.values(data);
+
+        const conditions = columns.map(column => `${column} = ?`).join(" OR ");
+        const query = `DELETE FROM ${table} WHERE ${conditions}`;
+
+        return new Promise((resolve, reject) => {
+            this._connection.run(query, values, (err) => {
+                this._handleError(query, err) ? resolve(true) : reject(false);
             })
         })
     }

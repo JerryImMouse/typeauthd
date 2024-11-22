@@ -50,7 +50,7 @@ export class Database {
 /// current implementation won't work because of different syntax in Postgres and SQLite
 export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord {
     private readonly _db: T;
-    private static readonly _authRecordsTableName = 'authorized_records'
+    private static readonly _tableName = 'authorized_records'
     
     id?: number | undefined;
     uid: string;
@@ -71,7 +71,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
 
     async save(): Promise<boolean> {
         // shitty upsert implementation
-        return await this._db.upsert(AuthorizedRecord._authRecordsTableName, this.id ? {
+        return await this._db.upsert(AuthorizedRecord._tableName, this.id ? {
             id: this.id,
             uid: this.uid,
             discord_uid: this.discord_uid,
@@ -89,7 +89,14 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
 
     static async find<T extends IDatabase>(db: T,options: IAuthorizedRecordSearchOptions): Promise<IAuthorizedRecord | null> {
         validateSearchOpt(options);
-        let res = await db.selectOne<IAuthorizedRecord>(`SELECT * FROM ${AuthorizedRecord._authRecordsTableName} WHERE ${options.id ? 'id' : 'uid'} = ?;`, [(options.id ? options.id : options.uid!)]);
+
+        // See TODO in delete() func
+        let res = await db.select<IAuthorizedRecord>(
+            AuthorizedRecord._tableName, // table
+            options.id ? 'id' : 'uid', // key
+            options.id ? options.id : options.uid! // value
+        );
+
         if (!res) {
             return null;
         }
@@ -98,10 +105,10 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
     }
 
     static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<IAuthorizedRecord> {
-        const recordExists = await db.selectOne<IAuthorizedRecord>(
-            `SELECT * FROM ${AuthorizedRecord._authRecordsTableName} WHERE uid = ? OR discord_uid = ?`,
-            [uid, discord_uid]
-        );
+        const recordExists = await db.selectOrOnly<IAuthorizedRecord>(AuthorizedRecord._tableName, {
+            'discord_uid': discord_uid,
+            'uid': uid 
+        });
 
         if (recordExists) {
             Logger.get().error("Attempted to create an object with the same values, try to use find() instead", {uid, discord_uid, passed_uid: uid, passed_duid: discord_uid});
@@ -112,8 +119,11 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
     }
 
     async delete(): Promise<boolean> {
+        // TODO:
+        // I don't like the way I determine value and key, so I should to get a more elegant solution for this.
+        // Im thinking about returning them out of some helper function which interface has to have, but Ill think about it more later.
         const searchValue = this.id ? this.id : this.uid;
-        const query = `DELETE FROM ${AuthorizedRecord._authRecordsTableName} WHERE ${(this.id ? "id" : "uid")} = ?`;
-        return this._db.execute(query, [searchValue]);
+        const key = this.id ? 'id' : 'uid';
+        return this._db.delete(AuthorizedRecord._tableName, key, searchValue);
     }
 }
