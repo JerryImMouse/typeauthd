@@ -1,0 +1,7 @@
+{
+    "port": 5555,
+    "database": {
+        "provider": "sqlite",
+        "connection": "app.sqlite"
+    }
+}
