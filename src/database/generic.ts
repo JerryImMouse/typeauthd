@@ -104,7 +104,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires, res.id);
     }
 
-    static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<IAuthorizedRecord> {
+    static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<AuthorizedRecord<T>> {
         const recordExists = await db.selectOrOnly<IAuthorizedRecord>(AuthorizedRecord._tableName, {
             'discord_uid': discord_uid,
             'uid': uid 
@@ -112,7 +112,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
 
         if (recordExists) {
             Logger.get().error("Attempted to create an object with the same values, try to use find() instead", {uid, discord_uid, passed_uid: uid, passed_duid: discord_uid});
-            return recordExists;
+            return new AuthorizedRecord(db, recordExists.uid, recordExists.discord_uid, recordExists.access_token, recordExists.refresh_token, recordExists.expires, recordExists.id);
         }
 
         return new AuthorizedRecord(db, uid, discord_uid, access_token, refresh_token, expires, id);

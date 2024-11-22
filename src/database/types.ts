@@ -27,10 +27,6 @@ export interface IAuthorizedRecord {
     access_token: string;
     refresh_token: string;
     expires: number;
-
-    save(): Promise<boolean>;
-    delete(): Promise<boolean>;
-    // other CRUD operations can be done via save() and setting fields ;D
 }
 
 export interface IAuthorizedRecordSearchOptions {
