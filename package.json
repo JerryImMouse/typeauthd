@@ -11,7 +11,7 @@
     "typeauthd"
   ],
   "author": "JerryImMouse",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "@types/node": "^22.9.1",
     "@types/sqlite3": "^3.1.11",
