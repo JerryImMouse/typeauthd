@@ -3,6 +3,16 @@ import { IAuthorizedRecord, IAuthorizedRecordSearchOptions, IDatabase, validateS
 
 const authRecordsTableName = 'authorized_records'
 
+/// TODO: Im still thinking about realization of this. I want it to be easily used wherever I'll need. 
+///
+/// So, I have 3 ways of passing database object here. 
+/// 1. Store it in a field and pass it wherever I want to create a new object of this type. Static methods will be served with this object always.
+/// 2. Store it in a field and pass it implicitly by (somehow) using static methods in interfaces(idk how, really), static methods then can be served implicitly too.
+/// 3. All methods(static or not) will accept database object.
+///
+/// In all this ways there are cons and pros. Now, I like the first way, it seems to be a good choice, but I have not much experience in such things
+/// so I'll have to look at this while growing the project ;D
+///
 export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord {
     private _db: T;
     
