@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "Authorization service for multiple purposes",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "start": "ts-node ./src/index.ts",
+    "build": "tsc"
   },
   "keywords": [
     "typeauthd"

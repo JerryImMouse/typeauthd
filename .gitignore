@@ -1,2 +1,8 @@
+# node modules source
 node_modules
+
+# any sqlite database
 *.sqlite
+
+# TS compiler output
+dist
