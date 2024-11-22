@@ -1,5 +1,4 @@
-import path from "path";
-import { IAuthorizedRecord, IAuthorizedRecordSearchOptions, IDatabase, validateSearchOpt } from "./types";
+import { IDatabase } from "./types";
 import { Database as SqlDb } from "sqlite3";
 import { eabort, mapErr } from "../helpers";
 import { Logger } from "../logging";
@@ -95,66 +94,5 @@ export class SqliteDatabase implements IDatabase {
         }
 
         return true;
-    }
-}
-
-export class SqliteAuthorizedRecord implements IAuthorizedRecord {
-    private _db: SqliteDatabase;
-    
-    id?: number | undefined;
-    uid: string;
-    discord_uid: string;
-    access_token: string;
-    refresh_token: string;
-    expires: number;
-
-    private constructor(uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number) {
-        this._db = SqliteDatabase.get();
-        this.id = id;
-        this.uid = uid;
-        this.discord_uid = discord_uid;
-        this.access_token = access_token;
-        this.refresh_token = refresh_token;
-        this.expires = expires;
-    }
-
-    async save(): Promise<boolean> {
-        // shitty upsert implementation
-        return await this._db.execute(
-            `INSERT INTO ${SqliteDatabase.authRecordsTableName} 
-            (uid, discord_uid, access_token, refresh_token, expires) 
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(uid) DO UPDATE SET
-                discord_uid = excluded.discord_uid,
-                access_token = excluded.access_token,
-                refresh_token = excluded.refresh_token,
-                expires = excluded.expires`,
-            [this.uid, this.discord_uid, this.access_token, this.refresh_token, this.expires]
-        );
-    }
-
-    static async find(options: IAuthorizedRecordSearchOptions): Promise<IAuthorizedRecord | null> {
-        validateSearchOpt(options);
-        return await SqliteDatabase.get().selectOne(`SELECT * FROM ${SqliteDatabase.authRecordsTableName} WHERE ${options.id ? 'id' : 'uid'} = ${options.id ? options.id : options.uid};`)
-    }
-
-    static async create(uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<IAuthorizedRecord> {
-        const recordExists = await SqliteDatabase.get().selectOne<SqliteAuthorizedRecord>(
-            `SELECT * FROM ${SqliteDatabase.authRecordsTableName} WHERE uid = ? OR discord_uid = ?`,
-            [uid, discord_uid]
-        );
-
-        if (recordExists) {
-            Logger.get().error("Attempted to create an object with the same values, try to use find() instead", {uid, discord_uid, passed_uid: uid, passed_duid: discord_uid});
-            return recordExists;
-        }
-
-        return new SqliteAuthorizedRecord(uid, discord_uid, access_token, refresh_token, expires, id);
-    }
-
-    async delete(): Promise<boolean> {
-        const searchValue = this.id ? this.id : this.uid;
-        const query = `DELETE FROM ${SqliteDatabase.authRecordsTableName} WHERE ${(this.id ? "id" : "uid")} = ?`;
-        return this._db.execute(query, [searchValue]);
     }
 }

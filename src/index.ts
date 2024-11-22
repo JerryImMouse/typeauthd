@@ -1,15 +1,8 @@
-import { SqliteAuthorizedRecord, SqliteDatabase } from "./database/sqlite";
+import { SqliteDatabase } from "./database/sqlite";
+import { AuthorizedRecord } from "./database/generic";
 
-// testing field
 const db = SqliteDatabase.get();
-db.init().then((res) => {
-    console.log(res);
-});
 
-SqliteAuthorizedRecord.create('uid', 'duid', 'access_token', 'refresh_token', 123).then((obj) => {
-    obj.save();
+AuthorizedRecord.find(db, {uid: "test"}).then(obj => {
+    console.log(obj);
 });
-
-SqliteAuthorizedRecord.find({id: 1}).then((res) => {
-    console.log(res);
-})
