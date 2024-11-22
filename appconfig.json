@@ -1,7 +1,7 @@
 {
     "port": 5555,
     "database": {
-        "provider": "sqlite",
-        "connection": "app.sqlite"
+        "provider": "postgres",
+        "connection": "postgres://USER:PASS@HOST:PORT/DATABASE",
     }
 }

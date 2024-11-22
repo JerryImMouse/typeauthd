@@ -2,8 +2,9 @@ import { eabort } from "../helpers";
 
 export interface IDatabase {
     init(): Promise<boolean>;
-    execute(sql: string, params?: any[]): Promise<boolean>;
-    selectOne<T>(query: string, params?: any[]): Promise<T | null>;
+    execute(sql: string, params: (string | number)[]): Promise<boolean>;
+    selectOne<T>(query: string, params: (string | number)[]): Promise<T | null>;
+    upsert(table: string, data: Record<string, string | number>): Promise<boolean>;
 }
 
 /// AuthorizedRecord Structure

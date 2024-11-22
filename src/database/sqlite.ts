@@ -8,9 +8,9 @@ export class SqliteDatabase implements IDatabase {
     private readonly _logger: Logger
     private readonly _connection: SqlDb;
     private static _instance?: SqliteDatabase;
+    private static readonly _authRecordsTableName = 'authorized_records';
 
-    public static readonly authRecordsTableName = 'authorized_records'
-    private static readonly _authRecordsTableQuery = `CREATE TABLE IF NOT EXISTS ${SqliteDatabase.authRecordsTableName} 
+    private static readonly _authRecordsTableQuery = `CREATE TABLE IF NOT EXISTS ${SqliteDatabase._authRecordsTableName} 
     (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         uid TEXT NOT NULL UNIQUE,
@@ -20,8 +20,8 @@ export class SqliteDatabase implements IDatabase {
         expires INTEGER NOT NULL
     );`
 
-    private static readonly _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${SqliteDatabase.authRecordsTableName} (uid);`
-    private static readonly _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${SqliteDatabase.authRecordsTableName} (discord_uid);`
+    private static readonly _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${SqliteDatabase._authRecordsTableName} (uid);`
+    private static readonly _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${SqliteDatabase._authRecordsTableName} (discord_uid);`
 
     constructor(con: string) {
         this._logger = Logger.get();
@@ -68,6 +68,30 @@ export class SqliteDatabase implements IDatabase {
                 }
 
                 reject(false);
+            })
+        })
+    }
+
+    upsert(table: string, data: Record<string, string | number>): Promise<boolean> {
+        const columns = Object.keys(data);
+        const values = Object.values(data);
+
+        const placeholders = columns.map(() => "?").join(", ");
+
+        const updateClause = columns
+            .map(column => `${column} = excluded.${column}`)
+            .join(", ");
+
+        const query = `
+            INSERT INTO ${table} (${columns.join(", ")})
+            VALUES (${placeholders})
+            ON CONFLICT(${columns[0]}) DO UPDATE SET
+            ${updateClause};
+        `;
+
+        return new Promise((resolve, reject) => {
+            this._connection.run(query, values, (err) => {
+                this._handleError(query, err) ? resolve(true) : reject(false);
             })
         })
     }

@@ -1,7 +1,40 @@
+import { Configration } from "../config";
 import { Logger } from "../logging";
+import { PostgresDatabase } from "./postgres";
+import { SqliteDatabase } from "./sqlite";
 import { IAuthorizedRecord, IAuthorizedRecordSearchOptions, IDatabase, validateSearchOpt } from "./types";
+import path from 'path';
 
-const authRecordsTableName = 'authorized_records'
+export class Database {
+    private static _dbImpl?: IDatabase;
+    private static readonly _defaultSqlitePath = path.resolve(__dirname, '..', '..', 'app.sqlite');
+
+    static getDbImpl() {
+        if (this._dbImpl) {
+            return this._dbImpl;
+        }
+    
+        let config = Configration.get();
+    
+        switch (config.database_provider()) {
+            case "postgres": {
+                this._dbImpl = new PostgresDatabase(config.database_connection());
+                break;
+            }
+            case "sqlite": {
+                this._dbImpl = new SqliteDatabase(config.database_connection());
+                break;
+            }
+            default: {
+                // fallback to sqlite with warning
+                Logger.get().warn("Invalid database provider in configuration, falling back to SQLite...");
+                this._dbImpl = new SqliteDatabase(this._defaultSqlitePath);
+            }
+        }
+    
+        return this._dbImpl;
+    }
+}
 
 /// TODO: Im still thinking about realization of this. I want it to be easily used wherever I'll need. 
 ///
@@ -13,8 +46,11 @@ const authRecordsTableName = 'authorized_records'
 /// In all this ways there are cons and pros. Now, I like the first way, it seems to be a good choice, but I have not much experience in such things
 /// so I'll have to look at this while growing the project ;D
 ///
+/// More one TODO: I need to get rid of SQL queries here, so I can fully implement multiple database providers, 
+/// current implementation won't work because of different syntax in Postgres and SQLite
 export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord {
     private readonly _db: T;
+    private static readonly _authRecordsTableName = 'authorized_records'
     
     id?: number | undefined;
     uid: string;
@@ -35,27 +71,35 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
 
     async save(): Promise<boolean> {
         // shitty upsert implementation
-        return await this._db.execute(
-            `INSERT INTO ${authRecordsTableName} 
-            (uid, discord_uid, access_token, refresh_token, expires) 
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(uid) DO UPDATE SET
-                discord_uid = excluded.discord_uid,
-                access_token = excluded.access_token,
-                refresh_token = excluded.refresh_token,
-                expires = excluded.expires`,
-            [this.uid, this.discord_uid, this.access_token, this.refresh_token, this.expires]
-        );
+        return await this._db.upsert(AuthorizedRecord._authRecordsTableName, this.id ? {
+            id: this.id,
+            uid: this.uid,
+            discord_uid: this.discord_uid,
+            access_token: this.access_token,
+            refresh_token: this.refresh_token,
+            expires: this.expires,
+        } : {
+            uid: this.uid,
+            discord_uid: this.discord_uid,
+            access_token: this.access_token,
+            refresh_token: this.refresh_token,
+            expires: this.expires,
+        });
     }
 
     static async find<T extends IDatabase>(db: T,options: IAuthorizedRecordSearchOptions): Promise<IAuthorizedRecord | null> {
         validateSearchOpt(options);
-        return await db.selectOne(`SELECT * FROM ${authRecordsTableName} WHERE ${options.id ? 'id' : 'uid'} = ?;`, [(options.id ? options.id : options.uid)]);
+        let res = await db.selectOne<IAuthorizedRecord>(`SELECT * FROM ${AuthorizedRecord._authRecordsTableName} WHERE ${options.id ? 'id' : 'uid'} = ?;`, [(options.id ? options.id : options.uid!)]);
+        if (!res) {
+            return null;
+        }
+
+        return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires, res.id);
     }
 
     static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<IAuthorizedRecord> {
         const recordExists = await db.selectOne<IAuthorizedRecord>(
-            `SELECT * FROM ${authRecordsTableName} WHERE uid = ? OR discord_uid = ?`,
+            `SELECT * FROM ${AuthorizedRecord._authRecordsTableName} WHERE uid = ? OR discord_uid = ?`,
             [uid, discord_uid]
         );
 
@@ -69,7 +113,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
 
     async delete(): Promise<boolean> {
         const searchValue = this.id ? this.id : this.uid;
-        const query = `DELETE FROM ${authRecordsTableName} WHERE ${(this.id ? "id" : "uid")} = ?`;
+        const query = `DELETE FROM ${AuthorizedRecord._authRecordsTableName} WHERE ${(this.id ? "id" : "uid")} = ?`;
         return this._db.execute(query, [searchValue]);
     }
 }
