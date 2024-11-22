@@ -5,8 +5,8 @@ import path from 'path';
 import fs from 'fs';
 
 export class Configration {
-    private _logger: Logger;
-    private static _configPath = path.resolve(__dirname, '..', 'appconfig.json');
+    private readonly _logger: Logger;
+    private static readonly _configPath = path.resolve(__dirname, '..', 'appconfig.json');
     private static _instance: Configration;
 
     private _configData!: ConfigurationData; // we exiting on configuration fail, so this is ok

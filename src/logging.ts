@@ -11,9 +11,9 @@ export enum LogLevel {
 }
 
 export class Logger {
-    private _logger: winston.Logger;
+    private readonly _logger: winston.Logger;
     private static _instance?: Logger;
-    private static _name = "typeauthd";
+    private static readonly _name = "typeauthd";
 
     private constructor() {
         this._logger = this._initWinston();

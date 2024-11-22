@@ -5,12 +5,12 @@ import { Logger } from "../logging";
 import { Configration } from "../config";
 
 export class SqliteDatabase implements IDatabase {
-    private _logger: Logger
-    private _connection: SqlDb;
+    private readonly _logger: Logger
+    private readonly _connection: SqlDb;
     private static _instance?: SqliteDatabase;
 
-    public static authRecordsTableName = 'authorized_records'
-    private static _authRecordsTableQuery = `CREATE TABLE IF NOT EXISTS ${SqliteDatabase.authRecordsTableName} 
+    public static readonly authRecordsTableName = 'authorized_records'
+    private static readonly _authRecordsTableQuery = `CREATE TABLE IF NOT EXISTS ${SqliteDatabase.authRecordsTableName} 
     (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         uid TEXT NOT NULL UNIQUE,
@@ -20,8 +20,8 @@ export class SqliteDatabase implements IDatabase {
         expires INTEGER NOT NULL
     );`
 
-    private static _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${SqliteDatabase.authRecordsTableName} (uid);`
-    private static _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${SqliteDatabase.authRecordsTableName} (discord_uid);`
+    private static readonly _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${SqliteDatabase.authRecordsTableName} (uid);`
+    private static readonly _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${SqliteDatabase.authRecordsTableName} (discord_uid);`
 
     constructor(con: string) {
         this._logger = Logger.get();

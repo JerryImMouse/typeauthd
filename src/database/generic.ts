@@ -14,7 +14,7 @@ const authRecordsTableName = 'authorized_records'
 /// so I'll have to look at this while growing the project ;D
 ///
 export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord {
-    private _db: T;
+    private readonly _db: T;
     
     id?: number | undefined;
     uid: string;
