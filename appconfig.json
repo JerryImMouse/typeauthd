@@ -3,5 +3,8 @@
     "database": {
         "provider": "sqlite",
         "connection": "app.sqlite"
+    },
+    "app": {
+        "extraEnabled": true
     }
 }

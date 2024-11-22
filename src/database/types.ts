@@ -5,7 +5,7 @@ export interface IDatabase {
     execute(sql: string, params: (string | number)[]): Promise<boolean>;
     select<T>(table: string, key: string, value: string | number): Promise<T | null>; 
     selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null>
-    upsert(table: string, data: Record<string, string | number>): Promise<boolean>;
+    upsert(table: string, data: Record<string, string | number>): Promise<number | null>;
 
     delete(table: string, key: string, value: string | number): Promise<boolean>;
     deleteOr(table: string, data: Record<string, string | number>): Promise<boolean>;
@@ -34,8 +34,25 @@ export interface IAuthorizedRecordSearchOptions {
     uid?: string
 }
 
-export function validateSearchOpt(opt: IAuthorizedRecordSearchOptions): void {
+export interface IRecordExtra {
+    id?: number;
+    record_id: number;
+    json: string;
+}
+
+export interface IRecordExtraSearchOptions {
+    id?: number,
+    record_id?: number
+}
+
+export function validateRecordSearchOpt(opt: IAuthorizedRecordSearchOptions): void {
     if ((!opt.id && !opt.uid) || (opt.id && opt.uid)) {
+        eabort('Failed to validate database search options.', opt);
+    }
+}
+
+export function validateRecordExtraSearchOpt(opt: IRecordExtraSearchOptions): void {
+    if ((!opt.id && !opt.record_id) || (opt.id && opt.record_id)) {
         eabort('Failed to validate database search options.', opt);
     }
 }

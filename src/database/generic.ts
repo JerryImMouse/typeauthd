@@ -1,8 +1,18 @@
 import { Configration } from "../config";
+import { eabort } from "../helpers";
 import { Logger } from "../logging";
 import { PostgresDatabase } from "./postgres";
 import { SqliteDatabase } from "./sqlite";
-import { IAuthorizedRecord, IAuthorizedRecordSearchOptions, IDatabase, validateSearchOpt } from "./types";
+import { 
+    IAuthorizedRecord, 
+    IAuthorizedRecordSearchOptions, 
+    IDatabase, 
+    IRecordExtra, 
+    IRecordExtraSearchOptions, 
+    validateRecordExtraSearchOpt, 
+    validateRecordSearchOpt 
+} from "./types";
+
 import path from 'path';
 
 export class Database {
@@ -59,7 +69,9 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
     refresh_token: string;
     expires: number;
 
-    private constructor(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number) {
+    extra?: RecordExtra<T>;
+
+    private constructor(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number, extra?: RecordExtra<T>) {
         this._db = db;
         this.id = id;
         this.uid = uid;
@@ -67,11 +79,12 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         this.access_token = access_token;
         this.refresh_token = refresh_token;
         this.expires = expires;
+        this.extra = extra;
     }
 
-    async save(): Promise<boolean> {
+    async save(saveExtra: boolean = true): Promise<boolean> {
         // shitty upsert implementation
-        return await this._db.upsert(AuthorizedRecord._tableName, this.id ? {
+        const insertedId = await this._db.upsert(AuthorizedRecord._tableName, this.id ? {
             id: this.id,
             uid: this.uid,
             discord_uid: this.discord_uid,
@@ -85,10 +98,35 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
             refresh_token: this.refresh_token,
             expires: this.expires,
         });
+
+        if (insertedId) {
+            this.id = insertedId;
+        }
+
+        if (this.extra && saveExtra) {
+            await this.extra.save();
+        }
+
+        return true;
+    }
+
+    async ensureExtra(json?: string) {
+        if (!this.id) {
+            eabort('Unable to initialize extras if save() was never called.', this);
+            return false;
+        }
+        
+        this.extra = await AuthorizedRecord._createExtraIfNeeded(this._db, this.id, json ? json : JSON.stringify({}));
+        
+        if (this.extra) {
+            await this.extra.save();
+        }
+
+        return true;
     }
 
     static async find<T extends IDatabase>(db: T,options: IAuthorizedRecordSearchOptions): Promise<IAuthorizedRecord | null> {
-        validateSearchOpt(options);
+        validateRecordSearchOpt(options);
 
         // See TODO in delete() func
         let res = await db.select<IAuthorizedRecord>(
@@ -101,7 +139,8 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
             return null;
         }
 
-        return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires, res.id);
+        let extra = await this._createExtraIfNeeded(db, res.id!, JSON.stringify({})); // res.id should not be null...
+        return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires, res.id, extra);
     }
 
     static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<AuthorizedRecord<T>> {
@@ -111,8 +150,22 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         });
 
         if (recordExists) {
-            Logger.get().error("Attempted to create an object with the same values, try to use find() instead", {uid, discord_uid, passed_uid: uid, passed_duid: discord_uid});
-            return new AuthorizedRecord(db, recordExists.uid, recordExists.discord_uid, recordExists.access_token, recordExists.refresh_token, recordExists.expires, recordExists.id);
+            Logger.get().error("Attempted to create an object with the same values, try to use find() instead", {
+                found_uid: recordExists.uid, 
+                found_duid: recordExists.discord_uid, 
+                got_uid: uid, 
+                got_duid: discord_uid
+            });
+            
+            return new AuthorizedRecord(
+                db, 
+                recordExists.uid, 
+                recordExists.discord_uid, 
+                recordExists.access_token, 
+                recordExists.refresh_token, 
+                recordExists.expires, 
+                recordExists.id
+            );
         }
 
         return new AuthorizedRecord(db, uid, discord_uid, access_token, refresh_token, expires, id);
@@ -125,5 +178,86 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         const searchValue = this.id ? this.id : this.uid;
         const key = this.id ? 'id' : 'uid';
         return this._db.delete(AuthorizedRecord._tableName, key, searchValue);
+    }
+
+    private static async _createExtraIfNeeded<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra<T> | undefined> {
+        // TODO: check exists
+
+        if (Configration.get().app_extraEnabled()) {
+            return await RecordExtra.create<T>(db, record_id, json);
+        }
+        return undefined;
+    }
+}
+
+/// More one possibly bad decision is an implementation of this. I'm not so experienced in building such "ORM", 
+/// so it will be one more experiment, in which i'll determine if this was a good decision ;D
+export class RecordExtra<T extends IDatabase> implements IRecordExtra {
+    private readonly _db: T;
+    private static readonly _tableName = 'records_extra'
+
+    id?: number;
+    record_id: number;
+    json: string;
+
+    private constructor(db: T, record_id: number, json: string, id?: number) {
+        this._db = db;
+        this.id = id;
+        this.record_id = record_id;
+        this.json = json;
+    }
+
+    async save(): Promise<boolean> {
+        const insertedId = await this._db.upsert(RecordExtra._tableName, this.id ? {
+            id: this.id,
+            record_id: this.record_id,
+            json: this.json
+        } : {
+            record_id: this.record_id,
+            json: this.json
+        })
+
+        if (insertedId) {
+            this.id = insertedId;
+        }
+
+        return true;
+    }
+
+    static async find<T extends IDatabase>(db: T, opt: IRecordExtraSearchOptions): Promise<RecordExtra<T> | null> {
+        validateRecordExtraSearchOpt(opt);
+
+        let res = await db.select<IRecordExtra>(
+            RecordExtra._tableName, // table
+            opt.id ? 'id' : 'record_id', // key
+            opt.id ? opt.id : opt.record_id! // value
+        );
+
+        if (!res) {
+            return null;
+        }
+
+        return new RecordExtra(db, res.record_id, res.json, res.id);
+    }
+
+    static async create<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra<T>> {
+        const recordExists = await db.select<IRecordExtra>(RecordExtra._tableName, 'record_id', record_id);
+
+        if (recordExists) {
+            Logger.get().error("Attempted to create an object with the same values, try to use find() instead", {
+                found_record_id: recordExists.record_id,
+                got_record_id: record_id
+            });
+
+            return new RecordExtra(db, recordExists.record_id, recordExists.json, recordExists.id);
+        }
+
+        return new RecordExtra(db, record_id, json);
+    }
+
+    async delete(): Promise<boolean> {
+        const searchValue = this.id ? this.id : this.record_id;
+        const key = this.id ? 'id' : 'record_uid';
+        return this._db.delete(RecordExtra._tableName, key, searchValue);
     }
 }

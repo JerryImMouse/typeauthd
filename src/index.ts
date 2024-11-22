@@ -5,8 +5,11 @@ const db = Database.getDbImpl();
 
 db.init().then(() => {
     AuthorizedRecord.create(db, 'test','test','test','test',555).then(res => {
-        console.log(res);
-        res.save();
+        res.save().then(() => {
+            res.ensureExtra(JSON.stringify({given: 1})).then(() => {
+                console.log(res);
+            })
+        });
     });   
 })
 

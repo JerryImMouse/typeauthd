@@ -38,6 +38,10 @@ export class Configration {
         return this._configData.database.connection;
     }
 
+    public app_extraEnabled() {
+        return this._configData.app.extraEnabled;
+    }
+
     /// Special-Getter to get the only instance of Configuration
     
     public static get() {
@@ -51,10 +55,15 @@ export class Configration {
 
 export interface ConfigurationData {
     port: number;
-    database: DatabaseConfiguration
+    database: DatabaseConfiguration,
+    app: AppConfiguration
 }
 
 export interface DatabaseConfiguration {
     provider: string,
     connection: string
+}
+
+export interface AppConfiguration {
+    extraEnabled: boolean
 }

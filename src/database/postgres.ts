@@ -19,6 +19,14 @@ export class PostgresDatabase implements IDatabase {
         expires BIGINT NOT NULL
     );`
 
+    private static readonly _recordsExtraTableName = 'records_extra';
+    private static readonly _recordsExtraTableQuery = `CREATE TABLE IF NOT EXISTS ${PostgresDatabase._recordsExtraTableName} 
+    (
+        id SERIAL PRIMARY KEY,
+        record_id INTEGER NOT NULL UNIQUE REFERENCES ${PostgresDatabase._authRecordsTableName}(id) ON DELETE CASCADE,
+        json TEXT NOT NULL
+    );`;
+
     private static readonly _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${PostgresDatabase._authRecordsTableName} (uid);`
     private static readonly _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${PostgresDatabase._authRecordsTableName} (discord_uid);`
 
@@ -39,6 +47,9 @@ export class PostgresDatabase implements IDatabase {
     async init(): Promise<boolean> {
         try {
             await this._connection.query(PostgresDatabase._authRecordsTableQuery);
+            // TODO: add indexes
+
+            await this._connection.query(PostgresDatabase._recordsExtraTableQuery);
             return true;
         } catch (err) {
             if (err instanceof Error) {
@@ -58,25 +69,26 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
-    async upsert(table: string, data: Record<string, string | number>): Promise<boolean> {
+    async upsert(table: string, data: Record<string, string | number>): Promise<number | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
-    
+
         const placeholders = columns.map((_, index) => `$${index + 1}`).join(", ");
-    
+
         const query = `
             INSERT INTO ${table} (${columns.join(", ")})
             VALUES (${placeholders})
             ON CONFLICT (${columns[0]}) DO UPDATE SET
-            ${columns.slice(1).map(col => `${col} = EXCLUDED.${col}`).join(", ")};
+            ${columns.slice(1).map(col => `${col} = EXCLUDED.${col}`).join(", ")}
+            RETURNING id;
         `;
-        
+
         try {
-            await this._connection.query(query, values);
-            return true;
+            const result = await this._connection.query(query, values);
+            return result.rows.length > 0 ? result.rows[0].id : null;
         } catch (err) {
             this._handleError(query, err);
-            return false;
+            return null;
         }
     }
 

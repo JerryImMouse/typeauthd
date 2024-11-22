@@ -20,6 +20,15 @@ export class SqliteDatabase implements IDatabase {
         expires INTEGER NOT NULL
     );`
 
+    private static readonly _recordsExtraTableName = 'records_extra';
+    private static readonly _recordsExtraTableQuery = `CREATE TABLE IF NOT EXISTS ${SqliteDatabase._recordsExtraTableName} 
+    (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        record_id INTEGER NOT NULL UNIQUE,
+        json TEXT NOT NULL,
+        FOREIGN KEY (record_id) REFERENCES ${SqliteDatabase._authRecordsTableName}(id) ON DELETE CASCADE
+    );`;
+
     private static readonly _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${SqliteDatabase._authRecordsTableName} (uid);`
     private static readonly _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${SqliteDatabase._authRecordsTableName} (discord_uid);`
 
@@ -37,11 +46,13 @@ export class SqliteDatabase implements IDatabase {
     }
 
     async init(): Promise<boolean> {
-        const tableResult = await this.execute(SqliteDatabase._authRecordsTableQuery);
-        const idxUidResult = await this.execute(SqliteDatabase._authRecordsUidIndexQuery);
-        const idxDuidResult = await this.execute(SqliteDatabase._authRecordsDuidIndexQuery);
+        const authTableResult = await this.execute(SqliteDatabase._authRecordsTableQuery);
+        const authIdxUidResult = await this.execute(SqliteDatabase._authRecordsUidIndexQuery);
+        const authIdxDuidResult = await this.execute(SqliteDatabase._authRecordsDuidIndexQuery);
+
+        const extraTableResult = await this.execute(SqliteDatabase._recordsExtraTableQuery);
             
-        if (tableResult && idxUidResult && idxDuidResult) {
+        if (authTableResult && authIdxUidResult && authIdxDuidResult && extraTableResult) {
             return true;
         }
 
@@ -72,7 +83,7 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
-    upsert(table: string, data: Record<string, string | number>): Promise<boolean> {
+    upsert(table: string, data: Record<string, string | number>): Promise<number | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
 
@@ -91,7 +102,17 @@ export class SqliteDatabase implements IDatabase {
 
         return new Promise((resolve, reject) => {
             this._connection.run(query, values, (err) => {
-                this._handleError(query, err) ? resolve(true) : reject(false);
+                if (!this._handleError(query, err)) {
+                    return resolve(null);
+                }
+
+                this._connection.get(`SELECT last_insert_rowid() as id`, (err, row: {id: number}) => {
+                    if (err) {
+                        this._handleError(`SELECT last_insert_rowid()`, err);
+                        return reject(null);
+                    }
+                    resolve(row ? row.id : null);
+                });
             })
         })
     }
