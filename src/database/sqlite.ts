@@ -17,8 +17,21 @@ export class SqliteDatabase implements IDatabase {
         discord_uid TEXT NOT NULL UNIQUE,
         access_token TEXT NOT NULL,
         refresh_token TEXT NOT NULL,
-        expires INTEGER NOT NULL
+        expires INTEGER NOT NULL,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`
+
+    private static readonly _authRecordsUpdateTrigger = `
+        CREATE TRIGGER IF NOT EXISTS update_auth_records_updated_at
+        AFTER UPDATE ON ${SqliteDatabase._authRecordsTableName}
+        FOR EACH ROW
+        WHEN OLD.access_token != NEW.access_token OR OLD.refresh_token != NEW.refresh_token
+        BEGIN
+            UPDATE ${SqliteDatabase._authRecordsTableName}
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = OLD.id;
+        END;
+        `;
 
     private static readonly _recordsExtraTableName = 'records_extra';
     private static readonly _recordsExtraTableQuery = `CREATE TABLE IF NOT EXISTS ${SqliteDatabase._recordsExtraTableName} 
@@ -47,6 +60,7 @@ export class SqliteDatabase implements IDatabase {
 
     async init(): Promise<boolean> {
         const authTableResult = await this.execute(SqliteDatabase._authRecordsTableQuery);
+        const authTriggeResult = await this.execute(SqliteDatabase._authRecordsUpdateTrigger);
         const authIdxUidResult = await this.execute(SqliteDatabase._authRecordsUidIndexQuery);
         const authIdxDuidResult = await this.execute(SqliteDatabase._authRecordsDuidIndexQuery);
 

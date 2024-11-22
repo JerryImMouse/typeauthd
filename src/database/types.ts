@@ -27,6 +27,7 @@ export interface IAuthorizedRecord {
     access_token: string;
     refresh_token: string;
     expires: number;
+    updated_at: string;
 }
 
 export interface IAuthorizedRecordSearchOptions {

@@ -68,10 +68,11 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
     access_token: string;
     refresh_token: string;
     expires: number;
+    updated_at: string;
 
     extra?: RecordExtra<T>;
 
-    private constructor(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number, extra?: RecordExtra<T>) {
+    private constructor(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, updated_at: string, id?: number, extra?: RecordExtra<T>) {
         this._db = db;
         this.id = id;
         this.uid = uid;
@@ -79,6 +80,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         this.access_token = access_token;
         this.refresh_token = refresh_token;
         this.expires = expires;
+        this.updated_at = updated_at;
         this.extra = extra;
     }
 
@@ -125,7 +127,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         return true;
     }
 
-    static async find<T extends IDatabase>(db: T,options: IAuthorizedRecordSearchOptions): Promise<IAuthorizedRecord | null> {
+    static async find<T extends IDatabase>(db: T,options: IAuthorizedRecordSearchOptions): Promise<AuthorizedRecord<T> | null> {
         validateRecordSearchOpt(options);
 
         // See TODO in delete() func
@@ -140,7 +142,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         }
 
         let extra = await this._createExtraIfNeeded(db, res.id!, JSON.stringify({})); // res.id should not be null...
-        return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires, res.id, extra);
+        return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires,res.updated_at, res.id, extra);
     }
 
     static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<AuthorizedRecord<T>> {
@@ -156,19 +158,22 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
                 got_uid: uid, 
                 got_duid: discord_uid
             });
-            
+
+            const extra = await RecordExtra.find(db, {record_id: recordExists.id});
             return new AuthorizedRecord(
                 db, 
                 recordExists.uid, 
                 recordExists.discord_uid, 
                 recordExists.access_token, 
                 recordExists.refresh_token, 
-                recordExists.expires, 
-                recordExists.id
+                recordExists.expires,
+                recordExists.updated_at,
+                recordExists.id,
+                extra ?? undefined
             );
         }
 
-        return new AuthorizedRecord(db, uid, discord_uid, access_token, refresh_token, expires, id);
+        return new AuthorizedRecord(db, uid, discord_uid, access_token, refresh_token, expires, new Date().toISOString(), id);
     }
 
     async delete(): Promise<boolean> {
@@ -181,11 +186,16 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
     }
 
     private static async _createExtraIfNeeded<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra<T> | undefined> {
-        // TODO: check exists
+        const exists = await RecordExtra.find(db, {record_id: record_id});
+
+        if (exists) {
+            return exists;
+        }
 
         if (Configration.get().app_extraEnabled()) {
             return await RecordExtra.create<T>(db, record_id, json);
         }
+
         return undefined;
     }
 }

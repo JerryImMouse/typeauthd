@@ -13,9 +13,11 @@
   "author": "JerryImMouse",
   "license": "AGPL-3.0-only",
   "dependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^22.9.1",
     "@types/pg": "^8.11.10",
     "@types/sqlite3": "^3.1.11",
+    "express": "^4.21.1",
     "pg": "^8.13.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.17.0"

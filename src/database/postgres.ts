@@ -16,8 +16,29 @@ export class PostgresDatabase implements IDatabase {
         discord_uid TEXT NOT NULL UNIQUE,
         access_token TEXT NOT NULL,
         refresh_token TEXT NOT NULL,
-        expires BIGINT NOT NULL
+        expires BIGINT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`
+
+    private static readonly _updateAtFunctionQuery = `
+        CREATE OR REPLACE FUNCTION update_updated_at()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            IF NEW.access_token IS DISTINCT FROM OLD.access_token OR
+            NEW.refresh_token IS DISTINCT FROM OLD.refresh_token THEN
+                NEW.updated_at := CURRENT_TIMESTAMP;
+            END IF;
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+    `;
+
+    private static readonly _updateAtTriggerQuery = `
+        CREATE TRIGGER auth_records_updated_at_trigger
+        BEFORE UPDATE ON ${PostgresDatabase._authRecordsTableName}
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at();
+    `;
 
     private static readonly _recordsExtraTableName = 'records_extra';
     private static readonly _recordsExtraTableQuery = `CREATE TABLE IF NOT EXISTS ${PostgresDatabase._recordsExtraTableName} 
@@ -47,6 +68,10 @@ export class PostgresDatabase implements IDatabase {
     async init(): Promise<boolean> {
         try {
             await this._connection.query(PostgresDatabase._authRecordsTableQuery);
+            await this._connection.query(PostgresDatabase._updateAtFunctionQuery);
+            if (!await this.select<any | null>('pg_trigger', 'tgname', 'auth_records_updated_at_trigger')) {
+                await this._connection.query(PostgresDatabase._updateAtTriggerQuery);
+            }
             // TODO: add indexes
 
             await this._connection.query(PostgresDatabase._recordsExtraTableQuery);
