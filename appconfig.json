@@ -1,10 +1,15 @@
 {
-    "port": 5555,
+    "port": 2424,
     "database": {
-        "provider": "postgres",
-        "connection": "postgres://postgres:root@127.0.0.1:5432/test"
+        "provider": "sqlite",
+        "connection": "app.sqlite"
     },
     "app": {
         "extraEnabled": true
+    },
+    "discord": {
+        "clientId": "CLIENT_ID",
+        "clientSecret": "CLIENT_SECRET",
+        "redirectUri": "REDIRECT_URI"
     }
 }

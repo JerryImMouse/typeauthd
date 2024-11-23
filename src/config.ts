@@ -42,6 +42,18 @@ export class Configration {
         return this._configData.app.extraEnabled;
     }
 
+    public discord_clientId() {
+        return this._configData.discord.clientId;
+    }
+
+    public discord_clientSecret() {
+        return this._configData.discord.clientSecret;
+    }
+
+    public discord_redirectUri() {
+        return this._configData.discord.redirectUri;
+    }
+
     /// Special-Getter to get the only instance of Configuration
     
     public static get() {
@@ -56,7 +68,8 @@ export class Configration {
 export interface ConfigurationData {
     port: number;
     database: DatabaseConfiguration,
-    app: AppConfiguration
+    app: AppConfiguration,
+    discord: DiscordConfiguration
 }
 
 export interface DatabaseConfiguration {
@@ -66,4 +79,10 @@ export interface DatabaseConfiguration {
 
 export interface AppConfiguration {
     extraEnabled: boolean
+}
+
+export interface DiscordConfiguration {
+    clientId: string,
+    clientSecret: string,
+    redirectUri: string
 }

@@ -58,8 +58,8 @@ export class Database {
 ///
 /// More one TODO: I need to get rid of SQL queries here, so I can fully implement multiple database providers, 
 /// current implementation won't work because of different syntax in Postgres and SQLite
-export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord {
-    private readonly _db: T;
+export class AuthorizedRecord implements IAuthorizedRecord {
+    private readonly _db: IDatabase;
     private static readonly _tableName = 'authorized_records'
     
     id?: number | undefined;
@@ -70,9 +70,9 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
     expires: number;
     updated_at: string;
 
-    extra?: RecordExtra<T>;
+    extra?: RecordExtra;
 
-    private constructor(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, updated_at: string, id?: number, extra?: RecordExtra<T>) {
+    private constructor(db: IDatabase, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, updated_at: string, id?: number, extra?: RecordExtra) {
         this._db = db;
         this.id = id;
         this.uid = uid;
@@ -114,7 +114,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
 
     async ensureExtra(json?: string) {
         if (!this.id) {
-            eabort('Unable to initialize extras if save() was never called.', this);
+            eabort('Unable to initialize extras if save() was never called.', {uid: this.uid, duid: this.discord_uid});
             return false;
         }
         
@@ -127,7 +127,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         return true;
     }
 
-    static async find<T extends IDatabase>(db: T,options: IAuthorizedRecordSearchOptions): Promise<AuthorizedRecord<T> | null> {
+    static async find<T extends IDatabase>(db: IDatabase, options: IAuthorizedRecordSearchOptions): Promise<AuthorizedRecord | null> {
         validateRecordSearchOpt(options);
 
         // See TODO in delete() func
@@ -145,7 +145,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires,res.updated_at, res.id, extra);
     }
 
-    static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<AuthorizedRecord<T>> {
+    static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<AuthorizedRecord> {
         const recordExists = await db.selectOrOnly<IAuthorizedRecord>(AuthorizedRecord._tableName, {
             'discord_uid': discord_uid,
             'uid': uid 
@@ -185,7 +185,7 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
         return this._db.delete(AuthorizedRecord._tableName, key, searchValue);
     }
 
-    private static async _createExtraIfNeeded<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra<T> | undefined> {
+    private static async _createExtraIfNeeded<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra | undefined> {
         const exists = await RecordExtra.find(db, {record_id: record_id});
 
         if (exists) {
@@ -202,15 +202,15 @@ export class AuthorizedRecord<T extends IDatabase> implements IAuthorizedRecord 
 
 /// More one possibly bad decision is an implementation of this. I'm not so experienced in building such "ORM", 
 /// so it will be one more experiment, in which i'll determine if this was a good decision ;D
-export class RecordExtra<T extends IDatabase> implements IRecordExtra {
-    private readonly _db: T;
+export class RecordExtra implements IRecordExtra {
+    private readonly _db: IDatabase;
     private static readonly _tableName = 'records_extra'
 
     id?: number;
     record_id: number;
     json: string;
 
-    private constructor(db: T, record_id: number, json: string, id?: number) {
+    private constructor(db: IDatabase, record_id: number, json: string, id?: number) {
         this._db = db;
         this.id = id;
         this.record_id = record_id;
@@ -234,7 +234,7 @@ export class RecordExtra<T extends IDatabase> implements IRecordExtra {
         return true;
     }
 
-    static async find<T extends IDatabase>(db: T, opt: IRecordExtraSearchOptions): Promise<RecordExtra<T> | null> {
+    static async find<T extends IDatabase>(db: T, opt: IRecordExtraSearchOptions): Promise<RecordExtra | null> {
         validateRecordExtraSearchOpt(opt);
 
         let res = await db.select<IRecordExtra>(
@@ -250,7 +250,7 @@ export class RecordExtra<T extends IDatabase> implements IRecordExtra {
         return new RecordExtra(db, res.record_id, res.json, res.id);
     }
 
-    static async create<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra<T>> {
+    static async create<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra> {
         const recordExists = await db.select<IRecordExtra>(RecordExtra._tableName, 'record_id', record_id);
 
         if (recordExists) {
