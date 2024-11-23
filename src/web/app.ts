@@ -5,6 +5,7 @@ import express, {Express} from 'express';
 // controllers
 import { AuthController } from "./controllers/auth";
 import { ApiController } from "./controllers/api";
+import { Server } from "http";
 
 // erghh...
 export class WebApp {
@@ -29,7 +30,7 @@ export class WebApp {
         this._express.use('/auth', AuthController.collectToRouter());
     }
 
-    listen(cb: () => void) {
-        this._express.listen(this._port, cb);
+    listen(cb: () => void): Server {
+        return this._express.listen(this._port, cb);
     }
 }

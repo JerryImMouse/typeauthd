@@ -9,6 +9,7 @@ export interface IDatabase {
 
     delete(table: string, key: string, value: string | number): Promise<boolean>;
     deleteOr(table: string, data: Record<string, string | number>): Promise<boolean>;
+    close(): void;
 }
 
 /// AuthorizedRecord Structure

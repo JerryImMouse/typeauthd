@@ -172,6 +172,10 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
+    close() {
+        this._connection.close();
+    }
+
     private _handleError(query: string, err: unknown): boolean {
         if (err && err instanceof Error) {
             this._logger.error(`Error during SQLite query. ${query}`, mapErr(err));

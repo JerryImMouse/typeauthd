@@ -162,6 +162,10 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
+    close() {
+        this._connection.end();
+    }
+
     private _handleError(query: string, err: unknown): boolean {
         if (err && err instanceof Error) {
             this._logger.error(`Error during Postgres query. ${query}`, mapErr(err));

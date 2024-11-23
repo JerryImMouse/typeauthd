@@ -39,9 +39,18 @@ export class AuthController {
         }
 
         const record = await AuthorizedRecord.create(db, query.state, identifyScopeData.id, tokenStruct.access_token, tokenStruct.refresh_token, tokenStruct.expires_in);
+        
+        // first save call to fill id field, required for ensureExtra()
         await record.save();
+        // create extra record in database (if any turned on)
         await record.ensureExtra();
-        WebHelpers.setExtraIfAny(record, {name: identifyScopeData.username});
+        
+        WebHelpers.setExtraIfAny(record, {
+            name: identifyScopeData.username,
+            ...(identifyScopeData.global_name !== undefined && { global_name: identifyScopeData.global_name })
+        });
+
+        // second save to save extra data
         await record.save();
 
         res.send('Success');
