@@ -1,6 +1,7 @@
 import {Request, Response, Router} from 'express';
 import { WebHelpers } from '../helpers';
 import { AuthorizedRecord, Database } from '../../database/generic';
+import { checkApiToken } from '../middlewares/auth';
 
 // database should be already initialized here
 const db = Database.getDbImpl();
@@ -35,6 +36,20 @@ export class AuthController {
         const identifyScopeData = await WebHelpers.identify(tokenStruct.access_token);
         if (!identifyScopeData) {
             WebHelpers.respond(res, 'Unable to fetch identify scope', 500);
+            return;
+        }
+
+        // if we already have a record, just update tokens and leave credentials the same, so we avoid "reauthorization", this could be critical
+        // for some apps
+        const found = await AuthorizedRecord.find(db, {discord_uid: identifyScopeData.id});
+        if (found) {
+            found.access_token = tokenStruct.access_token;
+            found.refresh_token = tokenStruct.refresh_token;
+            found.expires = tokenStruct.expires_in;
+            await found.save();
+
+            // https://github.com/maximal/http-267
+            WebHelpers.respond(res, 'Tokens updated, but credentials left untouched', 267);
             return;
         }
 

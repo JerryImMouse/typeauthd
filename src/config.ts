@@ -42,6 +42,14 @@ export class Configration {
         return this._configData.app.extraEnabled;
     }
 
+    public app_jwtSecret() {
+        return this._configData.app.jwtSecret;
+    }
+
+    public app_apiSecret() {
+        return this._configData.app.apiSecret;
+    }
+
     public discord_clientId() {
         return this._configData.discord.clientId;
     }
@@ -78,7 +86,9 @@ export interface DatabaseConfiguration {
 }
 
 export interface AppConfiguration {
-    extraEnabled: boolean
+    extraEnabled: boolean,
+    jwtSecret: string,
+    apiSecret: string
 }
 
 export interface DiscordConfiguration {

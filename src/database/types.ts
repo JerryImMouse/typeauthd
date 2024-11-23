@@ -33,7 +33,8 @@ export interface IAuthorizedRecord {
 
 export interface IAuthorizedRecordSearchOptions {
     id?: number,
-    uid?: string
+    uid?: string,
+    discord_uid?: string
 }
 
 export interface IRecordExtra {
@@ -47,10 +48,15 @@ export interface IRecordExtraSearchOptions {
     record_id?: number
 }
 
-export function validateRecordSearchOpt(opt: IAuthorizedRecordSearchOptions): void {
-    if ((!opt.id && !opt.uid) || (opt.id && opt.uid)) {
+export function validateRecordSearchOpt(opt: IAuthorizedRecordSearchOptions): keyof IAuthorizedRecordSearchOptions {
+    const keys = ['id', 'uid', 'discord_uid'] as const; // Define valid keys
+    const definedKeys = keys.filter(key => opt[key] !== undefined);
+
+    if (definedKeys.length !== 1) {
         eabort('Failed to validate database search options.', opt);
     }
+
+    return definedKeys[0];
 }
 
 export function validateRecordExtraSearchOpt(opt: IRecordExtraSearchOptions): void {

@@ -128,13 +128,12 @@ export class AuthorizedRecord implements IAuthorizedRecord {
     }
 
     static async find<T extends IDatabase>(db: IDatabase, options: IAuthorizedRecordSearchOptions): Promise<AuthorizedRecord | null> {
-        validateRecordSearchOpt(options);
+        const key = validateRecordSearchOpt(options);
+        const value = options[key]!;
 
-        // See TODO in delete() func
         let res = await db.select<IAuthorizedRecord>(
             AuthorizedRecord._tableName, // table
-            options.id ? 'id' : 'uid', // key
-            options.id ? options.id : options.uid! // value
+            key, value
         );
 
         if (!res) {
