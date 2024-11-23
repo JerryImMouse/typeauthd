@@ -9,3 +9,5 @@ dist
 
 # Ignore some dev configuration
 appconfig.dev.json
+
+.vscode/*
