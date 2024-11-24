@@ -1,0 +1,97 @@
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to right, #24243E, #302B63, #0F0C29);
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    width: 100%;
+    padding: 10px 20px;
+    background: none;
+    position: relative;
+}
+
+.git-container {
+    display: flex;
+    align-items: center;
+    color: white;
+    padding-left: 10px;
+    cursor: pointer;
+}
+
+.git-img {
+    width: 45px;
+    height: auto;
+    margin-right: 5px;
+}
+
+.git-link {
+    text-decoration: none;
+}
+
+.git-link:hover p {
+    color: rgb(202, 202, 202);
+}
+
+.git {
+    text-align: left;
+    font-size: 1.7em;
+    margin: 0;
+    font-family: 'JetBrains Mono';
+    font-weight: bold;
+    transition: 0.5s;
+}
+
+.license-info {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: #7E7E7E;
+    font-size: 0.8em;
+    margin: 0;
+    font-family: 'JetBrains Mono';
+}
+
+.license-info a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.info-container {
+    display: flex;
+    background-color: gray;
+    width: 40%;
+    height: 30%;
+    border-radius: 8px;
+    margin-top: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.info-container p, h1, h2 {
+    font-family: 'JetBrains Mono';
+}

@@ -17,7 +17,12 @@ export class AuthController {
     }
 
     static async getLogin(req: Request, res: Response) {
-        
+        const query = WebHelpers.validateLinkParams(req.query);
+        if (!query) {
+            
+        }
+
+        res.render('login', {title: 'Login'});
     }
 
     static async getLogin_Cb(req: Request, res: Response) {

@@ -1,0 +1,16 @@
+html 
+    head 
+        title= title
+        link(rel='stylesheet' href='/css/style.css')
+    body
+        .info-container 
+            block content
+        footer
+            a.git-link(href= 'https://github.com/JerryImMouse/typeauthd')
+                .git-container
+                    img.git-img(src='/images/git.png' alt='GitHub')
+                    p.git GitHub
+            p.license-info
+                | The code for both the backend and frontend of this website is distributed under the GNU Affero General Public License v3.0.<br>
+                | If you use this software to provide a service, you must make the source code available to the users of that service.<br>
+                | Copyright © 2024, JerryImMouse.

@@ -16,12 +16,18 @@ export class Configration {
         try {
             const data = fs.readFileSync(Configration._configPath, {encoding: 'utf-8'});
             this._configData = JSON.parse(data);
+            this._adjustPaths();
         } catch (err) {
             if (err instanceof Error) 
                 eabort('Error during configuration setup.', mapErr(err));
 
             eabort('Unknown error occured during configuration setup.');
         }
+    }
+
+    private _adjustPaths() {
+        this._configData.app.https.keyFile = path.normalize(path.resolve(__dirname, this.app_https_keyFile()));
+        this._configData.app.https.certFile = path.normalize(path.resolve(__dirname, this.app_https_certFile()));
     }
 
     /// Getters
@@ -48,6 +54,18 @@ export class Configration {
 
     public app_apiSecret() {
         return this._configData.app.apiSecret;
+    }
+
+    public app_https_useSSL() {
+        return this._configData.app.https.useSSL;
+    }
+
+    public app_https_keyFile() {
+        return this._configData.app.https.keyFile;
+    }
+
+    public app_https_certFile() {
+        return this._configData.app.https.certFile;
     }
 
     public discord_clientId() {
@@ -88,7 +106,14 @@ export interface DatabaseConfiguration {
 export interface AppConfiguration {
     extraEnabled: boolean,
     jwtSecret: string,
-    apiSecret: string
+    apiSecret: string,
+    https: HttpsConfiguration
+}
+
+export interface HttpsConfiguration {
+    useSSL: boolean,
+    keyFile: string,
+    certFile: string
 }
 
 export interface DiscordConfiguration {

@@ -11,3 +11,6 @@ dist
 appconfig.dev.json
 
 .vscode/*
+
+# ignore debug folder
+cert

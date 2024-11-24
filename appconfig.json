@@ -7,11 +7,16 @@
     "app": {
         "extraEnabled": true,
         "jwtSecret": "jwt_is_cool",
-        "apiSecret": "key"
+        "apiSecret": "key",
+        "https": {
+            "useSSL": false,
+            "keyFile": "../cert/key.pem",
+            "certFile": "../cert/cert.pem"
+        }
     },
     "discord": {
-        "clientId": "CLIENT_ID",
-        "clientSecret": "CLIENT_SECRET",
-        "redirectUri": "REDIRECT_URI"
+        "clientId": "1143828623132991551",
+        "clientSecret": "xqakg9YJmTau2QeGpIQ8zqHLuDPmebeN",
+        "redirectUri": "http://127.0.0.1:2424/auth/login/cb"
     }
 }
