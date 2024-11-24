@@ -84,9 +84,9 @@ footer {
 
 .info-container {
     display: flex;
-    background-color: gray;
-    width: 40%;
-    height: 30%;
+    background-color: #444444;
+    width: 30%;
+    height: 65%;
     border-radius: 8px;
     margin-top: auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
