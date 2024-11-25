@@ -5,7 +5,7 @@
   "scripts": {
     "test": "jest",
     "start": "ts-node ./src/index.ts",
-    "build": "tsc"
+    "build": "tsc && ncp ./src/web/views ./dist/web/views"
   },
   "keywords": [
     "typeauthd"
@@ -19,6 +19,7 @@
     "@types/sqlite3": "^3.1.11",
     "express": "^4.21.1",
     "http2-express-bridge": "^1.0.7",
+    "ncp": "^2.0.0",
     "pg": "^8.13.1",
     "pug": "^3.0.3",
     "sqlite3": "^5.1.7",
