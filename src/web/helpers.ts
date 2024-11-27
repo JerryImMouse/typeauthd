@@ -23,8 +23,8 @@ export class WebHelpers {
     
     /// Express helpers
     
-    public static respond(res: ExResponse, msg: string, code: number) {
-        res.status(code).json({error: msg});
+    public static respond(res: ExResponse, msg: string, code: number, help: string) {
+        res.status(code).render('error', {title: 'Error', errorCode: code, errorDesc: msg, help: help})
     }
 
     /// Discord Related Helpers

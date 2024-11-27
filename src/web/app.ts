@@ -24,6 +24,7 @@ export class WebApp {
     }
 
     controllers() {
+        this._express.use(express.urlencoded({ extended: true }));
         this._express.use('/api', ApiController.collectToRouter());
         this._express.use('/auth', AuthController.collectToRouter());
     }

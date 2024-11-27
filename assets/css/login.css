@@ -1,0 +1,14 @@
+.auth-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-text {
+    color: white;
+    padding: 20px;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+}

@@ -92,7 +92,6 @@ export interface LinkQueryParams {
     uid: string
 }
 
-
 /// Express Helper Structs
 
 export interface RecordExtendedRequest extends ExRequest {

@@ -1,11 +1,10 @@
 import { Request, Response, Router } from 'express';
 import { checkApiToken } from '../middlewares/auth';
-import { findRecord, validateToken } from '../middlewares/api';
+import { findRecordByBody, findRecordByQuery, validateToken } from '../middlewares/api';
 import { WebHelpers } from '../helpers';
 import { RecordExtendedRequest } from '../../types/web';
 
-const apiStuff = [checkApiToken, findRecord, validateToken];
-
+const apiStuff = [checkApiToken, findRecordByQuery, validateToken];
 
 /// Here is the format
 /// getMETHODNAME - GET /api/METHODNAME
@@ -15,6 +14,7 @@ export class ApiController {
         router.get('/identify', apiStuff, this.getIdentify);
         router.get('/roles', apiStuff, this.getRoles);
         router.get('/guilds', apiStuff, this.getGuilds);
+        router.post('/delete', [checkApiToken, findRecordByBody], this.postDelete);
         router.get('/link', this.getLink);
         return router;
     }
@@ -71,5 +71,13 @@ export class ApiController {
 
         const link = WebHelpers.generateAuthLink(query.uid);
         res.status(200).json({link});
+    }
+
+    public static async postDelete(req: RecordExtendedRequest, res: Response) {
+        const record = req.record!;
+
+        await record.delete();
+
+        res.status(200).send();
     }
 }

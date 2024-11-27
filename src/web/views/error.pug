@@ -1,0 +1,12 @@
+extends layout.pug 
+
+block header 
+    link(rel='stylesheet' href='/css/error.css')
+
+block content 
+    .error-cont 
+        h1.err-title HTTP Error #{errorCode}
+        p.err-desc= errorDesc
+        br
+        p.err-desc <b>Troubleshooting:</b> #{help}
+            

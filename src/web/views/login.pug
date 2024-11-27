@@ -1,4 +1,12 @@
 extends layout.pug 
 
+block header
+    link(rel='stylesheet' href='/css/login.css')
+
 block content 
-    h1= 'Layouts!!'
+    .auth-container
+        h1= 'Description'
+        p.auth-text
+            | In order, to be able to login you'll need to make sure you have never authorized before, this won't break your authorization, but will change your tokens.<br><br>
+            | If some application depends on this, this can be critical for it, so, please, don't authorize twice, if you're having trouble it would be better to address them to developer or the host of this application.<br><br>
+            | If you're interested in your data processing you can follow Github link and look at the source code, or (if you're not a developer to look through sources) follow <a href='/auth/data-processing'>this</a> link and read about it.

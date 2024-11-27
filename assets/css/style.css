@@ -77,6 +77,34 @@ footer {
     font-family: 'JetBrains Mono';
 }
 
+.name {
+    position: absolute;
+    right: 20px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    text-align: right;
+    color: white;
+    font-size: 1.8em;
+    margin: 0;
+    font-family: 'JetBrains Mono';
+    font-weight: bold;
+}
+
+.trouble {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: 'JetBrains Mono';
+    font-weight: bold;
+    font-size: 0.8em;
+    text-align: left;
+}
+
+.trouble a {
+    text-decoration: none;
+}
+
 .license-info a {
     text-decoration: none;
     color: inherit;
