@@ -7,13 +7,13 @@ This application serves as an improved version of the original [ssj_auth](https:
 TypeAuthD supports native SSL certificates out-of-the-box or can operate behind a reverse proxy (W.I.P). All configuration is managed via `appconfig.json`, which follows this structure:
 ```jsonc
 {
-    "port": 2424, // Port to bind the Express server
     "database": {
         // Database provider to use (currently supports sqlite and postgres)
         "provider": "sqlite", // or "postgres"
         "connection": "app.sqlite" // Connection string, filename for sqlite or formatted connection string for postgres
     },
     "app": {
+        "port": 2424, // Port to bind the Express server
         "extraEnabled": true, // Enable an extra table in the database for custom information (JSON structure)
         "jwtSecret": "jwt_is_cool", // JWT secret (currently not in use)
         "apiSecret": "key", // API secret used as a bearer token for authorization in API requests

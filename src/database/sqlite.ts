@@ -1,4 +1,4 @@
-import { IDatabase } from "./types";
+import { IDatabase } from "../types/database";
 import { Database as SqlDb } from "sqlite3";
 import { eabort, mapErr } from "../helpers";
 import { Logger } from "../logging";
@@ -45,7 +45,7 @@ export class SqliteDatabase implements IDatabase {
     private static readonly _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${SqliteDatabase._authRecordsTableName} (uid);`
     private static readonly _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${SqliteDatabase._authRecordsTableName} (discord_uid);`
 
-    constructor(con: string) {
+    public constructor(con: string) {
         this._logger = Logger.get();
         this._connection = new SqlDb(con, (err) => {
             if (err) {
@@ -58,7 +58,7 @@ export class SqliteDatabase implements IDatabase {
         });
     }
 
-    async init(): Promise<boolean> {
+    public async init(): Promise<boolean> {
         const authTableResult = await this.execute(SqliteDatabase._authRecordsTableQuery);
         const authTriggeResult = await this.execute(SqliteDatabase._authRecordsUpdateTrigger);
         const authIdxUidResult = await this.execute(SqliteDatabase._authRecordsUidIndexQuery);
@@ -75,7 +75,7 @@ export class SqliteDatabase implements IDatabase {
 
     public static get() {
         // assumed that provider is SQLite
-        const con = Configration.get().database_connection();
+        const con = Configration.get().databaseConnectionStr;
 
         if (!SqliteDatabase._instance) {
             SqliteDatabase._instance = new SqliteDatabase(con);
@@ -84,7 +84,7 @@ export class SqliteDatabase implements IDatabase {
         return SqliteDatabase._instance!;
     }
 
-    execute(sql: string, params: (string | number)[] = []): Promise<boolean> {
+    public execute(sql: string, params: (string | number)[] = []): Promise<boolean> {
         return new Promise((resolve, reject) => {
             this._connection.run(sql, params, (err) => {
                 if (this._handleError(sql, err)) {
@@ -97,7 +97,7 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
-    upsert(table: string, data: Record<string, string | number>): Promise<number | null> {
+    public upsert(table: string, data: Record<string, string | number>): Promise<number | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
 
@@ -131,11 +131,11 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
-    select<T>(table: string, key: string, value: string | number): Promise<T | null> {
+    public select<T>(table: string, key: string, value: string | number): Promise<T | null> {
         return this.selectOrOnly(table, {[key]: value});
     }
 
-    selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
+    public selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
 
@@ -154,11 +154,11 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
-    delete(table: string, key: string, value: string | number): Promise<boolean> {
+    public delete(table: string, key: string, value: string | number): Promise<boolean> {
         return this.deleteOr(table, {[key]: value});
     }
 
-    deleteOr(table: string, data: Record<string, string | number>): Promise<boolean> {
+    public deleteOr(table: string, data: Record<string, string | number>): Promise<boolean> {
         const columns = Object.keys(data);
         const values = Object.values(data);
 
@@ -172,7 +172,7 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
-    close() {
+    public close() {
         this._connection.close();
     }
 
@@ -180,7 +180,9 @@ export class SqliteDatabase implements IDatabase {
         if (err && err instanceof Error) {
             this._logger.error(`Error during SQLite query. ${query}`, mapErr(err));
             return false;
-        } else if (err) {
+        } 
+        
+        if (err) {
             this._logger.error(`Unknown error occured during SQLite query. ${query}`);
             return false;
         }

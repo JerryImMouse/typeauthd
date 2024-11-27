@@ -1,10 +1,10 @@
 {
-    "port": 2424,
     "database": {
         "provider": "sqlite",
         "connection": "app.sqlite"
     },
     "app": {
+        "port": 2424,
         "extraEnabled": true,
         "jwtSecret": "jwt_is_cool",
         "apiSecret": "key",

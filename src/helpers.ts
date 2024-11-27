@@ -1,11 +1,12 @@
-import { Server } from 'http';
-import {LogCtx, Logger, LogMsg} from './logging';
-import { Database } from './database/generic';
-import http2, {Http2SecureServer} from 'http2';
-import { Configration } from './config';
+import http from 'http';
+import http2 from 'http2';
 import express from 'express';
 import fs from 'node:fs';
-import http from 'http';
+
+import { LogCtx, Logger, LogMsg } from './logging';
+import { Database } from './database/generic';
+import { Configration } from './config';
+import { AuthServer } from './types/web';
 
 export function eabort(msg: LogMsg, ctx?: LogCtx, exitCode: number = 1) {
     const logger = Logger.get();
@@ -20,7 +21,7 @@ export function mapErr(err: Error) {
     }
 }
 
-export function getSignalHandler(signal: string, server: Server | Http2SecureServer): () => void {
+export function getSignalHandler(signal: string, server: AuthServer): () => void {
     return () => {
         const logger = Logger.get();
         const db = Database.getDbImpl();
@@ -36,11 +37,11 @@ export function getSignalHandler(signal: string, server: Server | Http2SecureSer
     }
 }
 
-export function createServer(secure: boolean, app: express.Application): Server | Http2SecureServer {
+export function createServer(secure: boolean, app: express.Application): AuthServer {
     const config = Configration.get();
     if (secure) {
-        const key = fs.readFileSync(config.app_https_keyFile());
-        const cert = fs.readFileSync(config.app_https_certFile());
+        const key = fs.readFileSync(config.httpsKeyFile);
+        const cert = fs.readFileSync(config.httpsCertFile);
         const options = {
             key: key,
             cert: cert,

@@ -1,5 +1,8 @@
 import { Request as ExRequest } from "express";
 import { AuthorizedRecord } from "../database/generic";
+import { SearchMethod } from "../web/helpers";
+import { Server } from "node:http";
+import { Http2SecureServer } from "node:http2";
 
 /// Discord Structs
 
@@ -76,11 +79,6 @@ export interface DiscordCodeQuery {
     code: string,
 }
 
-export enum SearchMethod {
-    DISCORD = 'discord',
-    UID = 'uid'
-}
-
 export interface IdentifyQueryParams {
     method: SearchMethod,
     id: string // differs depending on `method`
@@ -100,3 +98,5 @@ export interface LinkQueryParams {
 export interface RecordExtendedRequest extends ExRequest {
     record?: AuthorizedRecord
 }
+
+export type AuthServer = Server | Http2SecureServer

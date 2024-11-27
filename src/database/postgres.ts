@@ -1,13 +1,14 @@
 import { eabort, mapErr } from "../helpers";
 import { Logger } from "../logging";
-import { IDatabase } from "./types";
+import { IDatabase } from "../types/database";
 import {Client as PgClient} from 'pg';
 
 export class PostgresDatabase implements IDatabase {
-    private readonly _logger: Logger
-    private readonly _connection!: PgClient;
     private static _instance?: PostgresDatabase;
     private static readonly _authRecordsTableName = 'authorized_records';
+
+    private readonly _connection!: PgClient;
+    private readonly _logger: Logger
 
     private static readonly _authRecordsTableQuery = `CREATE TABLE IF NOT EXISTS ${PostgresDatabase._authRecordsTableName} 
     (
@@ -51,7 +52,7 @@ export class PostgresDatabase implements IDatabase {
     private static readonly _authRecordsUidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_uid ON ${PostgresDatabase._authRecordsTableName} (uid);`
     private static readonly _authRecordsDuidIndexQuery = `CREATE INDEX IF NOT EXISTS idx_duid ON ${PostgresDatabase._authRecordsTableName} (discord_uid);`
 
-    constructor(con: string) {
+    public constructor(con: string) {
         this._logger = Logger.get();
         try {
             this._connection = new PgClient({connectionString: con});
@@ -65,14 +66,16 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
-    async init(): Promise<boolean> {
+    public async init(): Promise<boolean> {
         try {
             await this._connection.query(PostgresDatabase._authRecordsTableQuery);
             await this._connection.query(PostgresDatabase._updateAtFunctionQuery);
             if (!await this.select<any | null>('pg_trigger', 'tgname', 'auth_records_updated_at_trigger')) {
                 await this._connection.query(PostgresDatabase._updateAtTriggerQuery);
             }
-            // TODO: add indexes
+
+            await this._connection.query(PostgresDatabase._authRecordsUidIndexQuery);
+            await this._connection.query(PostgresDatabase._authRecordsDuidIndexQuery);
 
             await this._connection.query(PostgresDatabase._recordsExtraTableQuery);
             return true;
@@ -84,7 +87,7 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
-    async execute(sql: string, params: (string | number)[] = []): Promise<boolean> {
+    public async execute(sql: string, params: (string | number)[] = []): Promise<boolean> {
         try {
             await this._connection.query(sql, params);
             return true;
@@ -94,7 +97,7 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
-    async upsert(table: string, data: Record<string, string | number>): Promise<number | null> {
+    public async upsert(table: string, data: Record<string, string | number>): Promise<number | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
 
@@ -117,11 +120,11 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
-    select<T>(table: string, key: string, value: string | number): Promise<T | null> {
+    public select<T>(table: string, key: string, value: string | number): Promise<T | null> {
         return this.selectOrOnly(table, {[key]: value});
     }
 
-    async selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
+    public async selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
 
@@ -133,20 +136,20 @@ export class PostgresDatabase implements IDatabase {
 
             if (result.rows.length > 0) {
                 return result.rows[0] as T;
-            } else {
-                return null;
             }
+
+            return null;
         } catch (err) {
             this._handleError(query, err);
             return null;
         }
     }
 
-    delete(table: string, key: string, value: string | number): Promise<boolean> {
+    public delete(table: string, key: string, value: string | number): Promise<boolean> {
         return this.deleteOr(table, {[key]: value});
     }
 
-    async deleteOr(table: string, data: Record<string, string | number>): Promise<boolean> {
+    public async deleteOr(table: string, data: Record<string, string | number>): Promise<boolean> {
         const columns = Object.keys(data);
         const values = Object.values(data);
 
@@ -162,7 +165,7 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
-    close() {
+    public close() {
         this._connection.end();
     }
 
@@ -170,7 +173,9 @@ export class PostgresDatabase implements IDatabase {
         if (err && err instanceof Error) {
             this._logger.error(`Error during Postgres query. ${query}`, mapErr(err));
             return false;
-        } else if (err) {
+        } 
+        
+        if (err) {
             this._logger.error(`Unknown error occured during Postgres query. ${query}`);
             return false;
         }

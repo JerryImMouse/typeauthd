@@ -13,11 +13,11 @@ app.configure();
 app.controllers();
 app.middlewares();
 
-const server = createServer(config.app_https_useSSL(), app.application());
+const server = createServer(config.httpsUseSSL, app.application());
 
 process.once("SIGTERM", getSignalHandler('SIGTERM', server));
 process.once("SIGINT", getSignalHandler('SIGINT', server));
 
-server.listen(config.port(), () => {
-    Logger.get().info(`${(config.app_https_useSSL() ? 'Secure server' : 'Server')} started at ${config.port()}`);
+server.listen(config.port, () => {
+    Logger.get().info(`${(config.httpsUseSSL ? 'Secure server' : 'Server')} started at ${config.port}`);
 })

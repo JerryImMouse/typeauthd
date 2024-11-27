@@ -11,40 +11,17 @@ export enum LogLevel {
 }
 
 export class Logger {
-    private readonly _logger: winston.Logger;
     private static _instance?: Logger;
-    private static readonly _name = "typeauthd";
 
-    private constructor() {
-        this._logger = this._initWinston();
-    }
+    private readonly _logger: winston.Logger;
 
+    
     public static get() {
         if (!Logger._instance) {
             Logger._instance = new Logger();
         }
-
+        
         return Logger._instance!;
-    }
-
-    public debug(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.DEBG, (ctx ? {context: ctx} : undefined));
-    }
-
-    public info(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.INFO, (ctx ? {context: ctx} : undefined));
-    }
-
-    public warn(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.WARN, (ctx ? {context: ctx} : undefined));
-    }
-
-    public error(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.ERRO, (ctx ? {context: ctx} : undefined));
-    }
-
-    private _log(msg: LogMsg, level: LogLevel, ctx?: LogCtx) {
-        this._logger.log(level, msg, (ctx ? {context: ctx} : undefined));
     }
 
     private _initWinston() {
@@ -76,5 +53,29 @@ export class Logger {
             }),
             format.colorize({ all: true })
         );
+    }
+
+    private constructor() {
+        this._logger = this._initWinston();
+    }
+    
+    public debug(msg: LogMsg, ctx?: LogCtx) {
+        this._log(msg, LogLevel.DEBG, (ctx ? {context: ctx} : undefined));
+    }
+
+    public info(msg: LogMsg, ctx?: LogCtx) {
+        this._log(msg, LogLevel.INFO, (ctx ? {context: ctx} : undefined));
+    }
+
+    public warn(msg: LogMsg, ctx?: LogCtx) {
+        this._log(msg, LogLevel.WARN, (ctx ? {context: ctx} : undefined));
+    }
+
+    public error(msg: LogMsg, ctx?: LogCtx) {
+        this._log(msg, LogLevel.ERRO, (ctx ? {context: ctx} : undefined));
+    }
+
+    private _log(msg: LogMsg, level: LogLevel, ctx?: LogCtx) {
+        this._logger.log(level, msg, (ctx ? {context: ctx} : undefined));
     }
 }

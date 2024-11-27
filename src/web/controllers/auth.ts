@@ -1,7 +1,6 @@
 import {Request, Response, Router} from 'express';
 import { WebHelpers } from '../helpers';
 import { AuthorizedRecord, Database } from '../../database/generic';
-import { checkApiToken } from '../middlewares/auth';
 
 // database should be already initialized here
 const db = Database.getDbImpl();
@@ -9,14 +8,14 @@ const db = Database.getDbImpl();
 /// Here is the format
 /// getPATH_PATH_... - GET /auth/PATH/PATH/...
 export class AuthController {
-    static collectToRouter() {
+    public static collectToRouter() {
         const router = Router();
         router.get('/login', AuthController.getLogin);
         router.get('/login/cb', AuthController.getLogin_Cb);
         return router;
     }
 
-    static async getLogin(req: Request, res: Response) {
+    public static async getLogin(req: Request, res: Response) {
         const query = WebHelpers.validateLinkParams(req.query);
         if (!query) {
             
@@ -25,7 +24,7 @@ export class AuthController {
         res.render('login', {title: 'Login'});
     }
 
-    static async getLogin_Cb(req: Request, res: Response) {
+    public static async getLogin_Cb(req: Request, res: Response) {
         const query = WebHelpers.parseCodeQuery(req);
         if (!query) {
             WebHelpers.respond(res, 'Invalid Code provided', 400);

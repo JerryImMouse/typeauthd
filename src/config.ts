@@ -1,21 +1,20 @@
-import {Logger} from './logging';
 import { eabort, mapErr } from './helpers';
 
 import path from 'path';
 import fs from 'fs';
+import { ConfigurationData } from './types/config';
 
 export class Configration {
-    private readonly _logger: Logger;
     private static readonly _configPath = path.resolve(__dirname, '..', 'appconfig.json');
     private static _instance: Configration;
-
-    private _configData!: ConfigurationData; // we exiting on configuration fail, so this is ok
+    
+    private _configData!: ConfigurationData; // we are exiting on configuration fail, so ! is ok here, i think
 
     private constructor() {
-        this._logger = Logger.get();
         try {
             const data = fs.readFileSync(Configration._configPath, {encoding: 'utf-8'});
             this._configData = JSON.parse(data);
+            this._validate();
             this._adjustPaths();
         } catch (err) {
             if (err instanceof Error) 
@@ -26,61 +25,111 @@ export class Configration {
     }
 
     private _adjustPaths() {
-        this._configData.app.https.keyFile = path.normalize(path.resolve(__dirname, this.app_https_keyFile()));
-        this._configData.app.https.certFile = path.normalize(path.resolve(__dirname, this.app_https_certFile()));
+        this._configData.app.https.keyFile = path.normalize(path.resolve(__dirname, this.httpsKeyFile));
+        this._configData.app.https.certFile = path.normalize(path.resolve(__dirname, this.httpsCertFile));
+    }
+
+    // little bit messy, but works
+    private _validate() {
+        const isString = (value: any): value is string => typeof value === 'string' && value.trim() !== '';
+        const isNumber = (value: any): value is number => typeof value === 'number' && !isNaN(value);
+        const isBoolean = (value: any): value is boolean => typeof value === 'boolean';
+    
+        const db = this._configData.database;
+        if (!isString(db.provider)) 
+            eabort('Invalid or missing `database.provider` in configuration.');
+
+        if (!isString(db.connection)) 
+            eabort('Invalid or missing `database.connection` in configuration.');
+    
+
+        const app = this._configData.app;
+        if (!isNumber(app.port)) 
+            eabort('Invalid or missing `app.port` in configuration.');
+
+        if (!isBoolean(app.extraEnabled)) 
+            eabort('Invalid or missing `app.extraEnabled` in configuration.');
+
+        if (!isString(app.jwtSecret)) 
+            eabort('Invalid or missing `app.jwtSecret` in configuration.');
+
+        if (!isString(app.apiSecret)) 
+            eabort('Invalid or missing `app.apiSecret` in configuration.');
+
+    
+        const https = app.https;
+        if (!isBoolean(https.useSSL)) 
+            eabort('Invalid or missing `app.https.useSSL` in configuration.');
+
+        if (!isString(https.keyFile)) 
+            eabort('Invalid or missing `app.https.keyFile` in configuration.');
+
+        if (!isString(https.certFile)) 
+            eabort('Invalid or missing `app.https.certFile` in configuration.');
+    
+
+        const discord = this._configData.discord;
+        if (!isString(discord.clientId)) 
+            eabort('Invalid or missing `discord.clientId` in configuration.');
+
+        if (!isString(discord.clientSecret)) 
+            eabort('Invalid or missing `discord.clientSecret` in configuration.');
+
+        if (!isString(discord.redirectUri)) 
+            eabort('Invalid or missing `discord.redirectUri` in configuration.');
     }
 
     /// Getters
 
-    public port() {
-        return this._configData.port;
+    public get port() {
+        return this._configData.app.port;
     }
 
-    public database_provider() {
+    public get databaseProvider() {
         return this._configData.database.provider;
     }
 
-    public database_connection() {
+    public get databaseConnectionStr() {
         return this._configData.database.connection;
     }
 
-    public app_extraEnabled() {
+    public get extraEnabled() {
         return this._configData.app.extraEnabled;
     }
 
-    public app_jwtSecret() {
+    public get jwtSecret() {
         return this._configData.app.jwtSecret;
     }
 
-    public app_apiSecret() {
+    public get apiSecret() {
         return this._configData.app.apiSecret;
     }
 
-    public app_https_useSSL() {
+    public get httpsUseSSL() {
         return this._configData.app.https.useSSL;
     }
 
-    public app_https_keyFile() {
+    public get httpsKeyFile() {
         return this._configData.app.https.keyFile;
     }
 
-    public app_https_certFile() {
+    public get httpsCertFile() {
         return this._configData.app.https.certFile;
     }
 
-    public discord_clientId() {
+    public get discordClientId() {
         return this._configData.discord.clientId;
     }
 
-    public discord_clientSecret() {
+    public get discordClientSecret() {
         return this._configData.discord.clientSecret;
     }
 
-    public discord_redirectUri() {
+    public get discordRedirectUri() {
         return this._configData.discord.redirectUri;
     }
 
-    /// Special-Getter to get the only instance of Configuration
+    /// Singleton implementation
     
     public static get() {
         if (!Configration._instance) {
@@ -89,35 +138,4 @@ export class Configration {
 
         return Configration._instance!;
     }
-}
-
-export interface ConfigurationData {
-    port: number;
-    database: DatabaseConfiguration,
-    app: AppConfiguration,
-    discord: DiscordConfiguration
-}
-
-export interface DatabaseConfiguration {
-    provider: string,
-    connection: string
-}
-
-export interface AppConfiguration {
-    extraEnabled: boolean,
-    jwtSecret: string,
-    apiSecret: string,
-    https: HttpsConfiguration
-}
-
-export interface HttpsConfiguration {
-    useSSL: boolean,
-    keyFile: string,
-    certFile: string
-}
-
-export interface DiscordConfiguration {
-    clientId: string,
-    clientSecret: string,
-    redirectUri: string
 }

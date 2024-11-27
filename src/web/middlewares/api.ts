@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { WebHelpers } from "../helpers";
-import { IdentifyQueryParams, RecordExtendedRequest } from "../types";
+import { RecordExtendedRequest } from "../../types/web";
 import { Database } from "../../database/generic";
 
 const db = Database.getDbImpl();

@@ -8,37 +8,38 @@ import {
     IAuthorizedRecordSearchOptions, 
     IDatabase, 
     IRecordExtra, 
-    IRecordExtraSearchOptions, 
-    validateRecordExtraSearchOpt, 
-    validateRecordSearchOpt 
-} from "./types";
+    IRecordExtraSearchOptions
+} from "../types/database";
+
+import { getValidRecordSearchOpt, getValidRecordExtraSearchOpt } from "./helpers";
 
 import path from 'path';
+const DEFAULT_SQLITE_PATH = path.resolve(__dirname, '..', '..', 'app.sqlite');
+
 
 export class Database {
     private static _dbImpl?: IDatabase;
-    private static readonly _defaultSqlitePath = path.resolve(__dirname, '..', '..', 'app.sqlite');
 
-    static getDbImpl() {
+    public static getDbImpl() {
         if (this._dbImpl) {
             return this._dbImpl;
         }
     
         let config = Configration.get();
     
-        switch (config.database_provider()) {
+        switch (config.databaseProvider) {
             case "postgres": {
-                this._dbImpl = new PostgresDatabase(config.database_connection());
+                this._dbImpl = new PostgresDatabase(config.databaseConnectionStr);
                 break;
             }
             case "sqlite": {
-                this._dbImpl = new SqliteDatabase(config.database_connection());
+                this._dbImpl = new SqliteDatabase(config.databaseConnectionStr);
                 break;
             }
             default: {
                 // fallback to sqlite with warning
                 Logger.get().warn("Invalid database provider in configuration, falling back to SQLite...");
-                this._dbImpl = new SqliteDatabase(this._defaultSqlitePath);
+                this._dbImpl = new SqliteDatabase(DEFAULT_SQLITE_PATH);
             }
         }
     
@@ -46,31 +47,20 @@ export class Database {
     }
 }
 
-/// TODO: Im still thinking about realization of this. I want it to be easily used wherever I'll need. 
-///
-/// So, I have 3 ways of passing database object here. 
-/// 1. Store it in a field and pass it wherever I want to create a new object of this type. Static methods will be served with this object always.
-/// 2. Store it in a field and pass it implicitly by (somehow) using static methods in interfaces(idk how, really), static methods then can be served implicitly too.
-/// 3. All methods(static or not) will accept database object.
-///
-/// In all this ways there are cons and pros. Now, I like the first way, it seems to be a good choice, but I have not much experience in such things
-/// so I'll have to look at this while growing the project ;D
-///
-/// More one TODO: I need to get rid of SQL queries here, so I can fully implement multiple database providers, 
-/// current implementation won't work because of different syntax in Postgres and SQLite
 export class AuthorizedRecord implements IAuthorizedRecord {
-    private readonly _db: IDatabase;
-    private static readonly _tableName = 'authorized_records'
-    
-    id?: number | undefined;
-    uid: string;
-    discord_uid: string;
-    access_token: string;
-    refresh_token: string;
-    expires: number;
-    updated_at: string;
+    private static readonly _tableName = 'authorized_records';
 
-    extra?: RecordExtra;
+    private readonly _db: IDatabase;
+    
+    public id?: number; // id field can be null while created AuthorizedRecord are still not saved to database, but remain in memory.
+    public uid: string;
+    public discord_uid: string;
+    public access_token: string;
+    public refresh_token: string;
+    public expires: number;
+    public updated_at: string;
+
+    public extra?: RecordExtra;
 
     private constructor(db: IDatabase, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, updated_at: string, id?: number, extra?: RecordExtra) {
         this._db = db;
@@ -84,22 +74,17 @@ export class AuthorizedRecord implements IAuthorizedRecord {
         this.extra = extra;
     }
 
-    async save(saveExtra: boolean = true): Promise<boolean> {
-        // shitty upsert implementation
-        const insertedId = await this._db.upsert(AuthorizedRecord._tableName, this.id ? {
-            id: this.id,
+    public async save(saveExtra: boolean = true): Promise<boolean> {
+        const data = {
             uid: this.uid,
             discord_uid: this.discord_uid,
             access_token: this.access_token,
             refresh_token: this.refresh_token,
             expires: this.expires,
-        } : {
-            uid: this.uid,
-            discord_uid: this.discord_uid,
-            access_token: this.access_token,
-            refresh_token: this.refresh_token,
-            expires: this.expires,
-        });
+            ...(this.id && {id: this.id})
+        }
+        
+        const insertedId = await this._db.upsert(AuthorizedRecord._tableName, data);
 
         if (insertedId) {
             this.id = insertedId;
@@ -112,13 +97,13 @@ export class AuthorizedRecord implements IAuthorizedRecord {
         return true;
     }
 
-    async ensureExtra(json?: string) {
+    public async ensureExtra(json?: string) {
         if (!this.id) {
             eabort('Unable to initialize extras if save() was never called.', {uid: this.uid, duid: this.discord_uid});
             return false;
         }
         
-        this.extra = await AuthorizedRecord._createExtraIfNeeded(this._db, this.id, json ? json : JSON.stringify({}));
+        this.extra = await AuthorizedRecord._createExtraIfNeeded(this._db, this.id, json ? json : JSON.stringify({})) ?? undefined;
         
         if (this.extra) {
             await this.extra.save();
@@ -127,8 +112,8 @@ export class AuthorizedRecord implements IAuthorizedRecord {
         return true;
     }
 
-    static async find<T extends IDatabase>(db: IDatabase, options: IAuthorizedRecordSearchOptions): Promise<AuthorizedRecord | null> {
-        const key = validateRecordSearchOpt(options);
+    public static async find(db: IDatabase, options: IAuthorizedRecordSearchOptions): Promise<AuthorizedRecord | null> {
+        const key = getValidRecordSearchOpt(options);
         const value = options[key]!;
 
         let res = await db.select<IAuthorizedRecord>(
@@ -140,11 +125,11 @@ export class AuthorizedRecord implements IAuthorizedRecord {
             return null;
         }
 
-        let extra = await this._createExtraIfNeeded(db, res.id!, JSON.stringify({})); // res.id should not be null...
+        let extra = await this._createExtraIfNeeded(db, res.id!, JSON.stringify({})) ?? undefined; // res.id should not be null...
         return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires,res.updated_at, res.id, extra);
     }
 
-    static async create<T extends IDatabase>(db: T, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<AuthorizedRecord> {
+    public static async create(db: IDatabase, uid: string, discord_uid: string, access_token: string, refresh_token: string, expires: number, id?: number): Promise<AuthorizedRecord> {
         const recordExists = await db.selectOrOnly<IAuthorizedRecord>(AuthorizedRecord._tableName, {
             'discord_uid': discord_uid,
             'uid': uid 
@@ -175,7 +160,7 @@ export class AuthorizedRecord implements IAuthorizedRecord {
         return new AuthorizedRecord(db, uid, discord_uid, access_token, refresh_token, expires, new Date().toISOString(), id);
     }
 
-    async delete(): Promise<boolean> {
+    public async delete(): Promise<boolean> {
         // TODO:
         // I don't like the way I determine value and key, so I should to get a more elegant solution for this.
         // Im thinking about returning them out of some helper function which interface has to have, but Ill think about it more later.
@@ -184,18 +169,18 @@ export class AuthorizedRecord implements IAuthorizedRecord {
         return this._db.delete(AuthorizedRecord._tableName, key, searchValue);
     }
 
-    private static async _createExtraIfNeeded<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra | undefined> {
+    private static async _createExtraIfNeeded<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra | null> {
         const exists = await RecordExtra.find(db, {record_id: record_id});
 
         if (exists) {
             return exists;
         }
 
-        if (Configration.get().app_extraEnabled()) {
+        if (Configration.get().extraEnabled) {
             return await RecordExtra.create<T>(db, record_id, json);
         }
 
-        return undefined;
+        return null;
     }
 }
 
@@ -216,15 +201,14 @@ export class RecordExtra implements IRecordExtra {
         this.json = json;
     }
 
-    async save(): Promise<boolean> {
-        const insertedId = await this._db.upsert(RecordExtra._tableName, this.id ? {
-            id: this.id,
+    public async save(): Promise<boolean> {
+        const recordData = {
             record_id: this.record_id,
-            json: this.json
-        } : {
-            record_id: this.record_id,
-            json: this.json
-        })
+            json: this.json,
+            ...(this.id && { id: this.id }),
+        };
+    
+        const insertedId = await this._db.upsert(RecordExtra._tableName, recordData);
 
         if (insertedId) {
             this.id = insertedId;
@@ -233,13 +217,14 @@ export class RecordExtra implements IRecordExtra {
         return true;
     }
 
-    static async find<T extends IDatabase>(db: T, opt: IRecordExtraSearchOptions): Promise<RecordExtra | null> {
-        validateRecordExtraSearchOpt(opt);
+    public static async find<T extends IDatabase>(db: T, opt: IRecordExtraSearchOptions): Promise<RecordExtra | null> {
+        const key = getValidRecordExtraSearchOpt(opt);
+        const value = opt[key]!;
 
         let res = await db.select<IRecordExtra>(
-            RecordExtra._tableName, // table
-            opt.id ? 'id' : 'record_id', // key
-            opt.id ? opt.id : opt.record_id! // value
+            RecordExtra._tableName,
+            key,
+            value
         );
 
         if (!res) {
@@ -249,7 +234,7 @@ export class RecordExtra implements IRecordExtra {
         return new RecordExtra(db, res.record_id, res.json, res.id);
     }
 
-    static async create<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra> {
+    public static async create<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra> {
         const recordExists = await db.select<IRecordExtra>(RecordExtra._tableName, 'record_id', record_id);
 
         if (recordExists) {
@@ -264,7 +249,7 @@ export class RecordExtra implements IRecordExtra {
         return new RecordExtra(db, record_id, json);
     }
 
-    async delete(): Promise<boolean> {
+    public async delete(): Promise<boolean> {
         const searchValue = this.id ? this.id : this.record_id;
         const key = this.id ? 'id' : 'record_uid';
         return this._db.delete(RecordExtra._tableName, key, searchValue);

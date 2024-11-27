@@ -2,29 +2,34 @@ import {Request as ExRequest, Response as ExResponse} from 'express';
 import { Logger } from '../logging';
 import { Configration } from '../config';
 import { AuthorizedRecord } from '../database/generic';
-import { DiscordCodeQuery, DiscordCodeResponse, DiscordGuildMemberObject, DiscordPartialGuildObject, DiscordRawCodeQuery, DiscordUserObject, IdentifyQueryParams, LinkQueryParams, RolesQueryParams, SearchMethod } from './types';
-import { IDatabase } from '../database/types';
+import { DiscordCodeQuery, DiscordCodeResponse, DiscordGuildMemberObject, DiscordPartialGuildObject, DiscordRawCodeQuery, DiscordUserObject, IdentifyQueryParams, LinkQueryParams, RolesQueryParams } from '../types/web';
+import { IDatabase } from '../types/database';
 
 
 const config = Configration.get();
-const CLIENT_ID = config.discord_clientId();
-const CLIENT_SECRET = config.discord_clientSecret();
-const REDIRECT_URI = config.discord_redirectUri();
+const CLIENT_ID = config.discordClientId;
+const CLIENT_SECRET = config.discordClientSecret;
+const REDIRECT_URI = config.discordRedirectUri;
 const CLIENT_TOKEN = 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 
 export const DISCORD_API_URL = "https://discord.com/api/v10"
+
+export enum SearchMethod {
+    DISCORD = 'discord',
+    UID = 'uid'
+}
 
 export class WebHelpers {
     
     /// Express helpers
     
-    static respond(res: ExResponse, msg: string, code: number) {
+    public static respond(res: ExResponse, msg: string, code: number) {
         res.status(code).json({error: msg});
     }
 
     /// Discord Related Helpers
 
-    static parseCodeQuery(req: ExRequest): DiscordCodeQuery | null {
+    public static parseCodeQuery(req: ExRequest): DiscordCodeQuery | null {
         const query = req.query as DiscordRawCodeQuery;
         if (!query.code || !query.state) {
             return null;
@@ -33,7 +38,7 @@ export class WebHelpers {
         return {state: query.state!, code: query.code!};
     }
 
-    static async exchangeCode(code: string): Promise<DiscordCodeResponse | null> {
+    public static async exchangeCode(code: string): Promise<DiscordCodeResponse | null> {
         const params = new URLSearchParams({
             'grant_type': 'authorization_code',
             'code': code,
@@ -58,7 +63,7 @@ export class WebHelpers {
         return tokenData;
     }
 
-    static async identify(access_token: string): Promise<DiscordUserObject | null> {
+    public static async identify(access_token: string): Promise<DiscordUserObject | null> {
         const response = await fetch(`${DISCORD_API_URL}/users/@me`, {
             method: 'GET',
             headers: {
@@ -74,7 +79,7 @@ export class WebHelpers {
         return await response.json();
     }
 
-    static async guildMember(access_token: string, guildId: string): Promise<DiscordGuildMemberObject | null> {
+    public static async guildMember(access_token: string, guildId: string): Promise<DiscordGuildMemberObject | null> {
         const uri = `${DISCORD_API_URL}/users/@me/guilds/${guildId}/member`;
         const response = await fetch(uri, {
             method: 'get',
@@ -91,7 +96,7 @@ export class WebHelpers {
         return response.json();
     }
 
-    static async guilds(access_token: string): Promise<DiscordPartialGuildObject[] | null> {
+    public static async guilds(access_token: string): Promise<DiscordPartialGuildObject[] | null> {
         const uri = `${DISCORD_API_URL}/users/@me/guilds`;
         const response = await fetch(uri, {
             method: 'get',
@@ -108,7 +113,7 @@ export class WebHelpers {
         return response.json();
     }
 
-    static async ensureToken(record: AuthorizedRecord, httpCheck: boolean = false): Promise<boolean> {
+    public static async ensureToken(record: AuthorizedRecord, httpCheck: boolean = false): Promise<boolean> {
         if (httpCheck) {
             const response = await fetch(`${DISCORD_API_URL}/users/@me`, {
                 method: 'GET',
@@ -137,7 +142,7 @@ export class WebHelpers {
         return await this.refreshToken(record, true);
     }
 
-    static async refreshToken(record: AuthorizedRecord, save: boolean = true): Promise<boolean> {
+    public static async refreshToken(record: AuthorizedRecord, save: boolean = true): Promise<boolean> {
         const refreshToken = record.refresh_token;
         const params = new URLSearchParams({
             'grant_type': 'refresh_token',
@@ -168,21 +173,21 @@ export class WebHelpers {
     }
 
 
-    static async handleDiscordError(res: Response, msg: string) {
+    public static async handleDiscordError(res: Response, msg: string) {
         const json = await res.json();
         Logger.get().error(msg, json);
     }
 
     /// TypeAuthD Related Helpers
 
-    static setExtraIfAny(record: AuthorizedRecord, data: Record<string, string | number>) {
+    public static setExtraIfAny(record: AuthorizedRecord, data: Record<string, string | number>) {
         const json = JSON.stringify(data);
         if (record.extra) {
             record.extra.json = json;
         }
     }
 
-    static validateIdentifyParams(query: any): IdentifyQueryParams | null {
+    public static validateIdentifyParams(query: any): IdentifyQueryParams | null {
         if (!query || typeof query !== 'object') {
             return null;
         }
@@ -199,7 +204,7 @@ export class WebHelpers {
         return { method, id } as IdentifyQueryParams;
     }
 
-    static validateRolesParams(query: any): RolesQueryParams | null {
+    public static validateRolesParams(query: any): RolesQueryParams | null {
         if (!query || typeof query !== 'object') {
             return null;
         }
@@ -220,7 +225,7 @@ export class WebHelpers {
         return { method, id, guildId } as RolesQueryParams;
     }
 
-    static validateLinkParams(query: any): LinkQueryParams | null {
+    public static validateLinkParams(query: any): LinkQueryParams | null {
         if (!query || typeof query !== 'object') {
             return null;
         }
@@ -233,7 +238,7 @@ export class WebHelpers {
         return { uid } as LinkQueryParams;
     }
 
-    static async fetchRecordByMethod(db: IDatabase, id: string, method: SearchMethod): Promise<AuthorizedRecord | undefined> {
+    public static async fetchRecordByMethod(db: IDatabase, id: string, method: SearchMethod): Promise<AuthorizedRecord | undefined> {
         let record: AuthorizedRecord | undefined = undefined;
 
         switch (method) {
@@ -250,13 +255,12 @@ export class WebHelpers {
         return record;
     }
 
-    static generateAuthLink(uid: string): string {
+    public static generateAuthLink(uid: string): string {
         const DISCORD_LINK_TEMPLATE = `https://discord.com/oauth2/authorize`;
-        const clientId = config.discord_clientId();
-        const encodedUri = encodeURI(config.discord_redirectUri());
+        const encodedUri = encodeURI(REDIRECT_URI);
         const scopeArr = `scope=identify+guilds+guilds.members.read`;
 
-        const link = `${DISCORD_LINK_TEMPLATE}?client_id=${clientId}&response_type=code&redirect_uri=${encodedUri}&${scopeArr}&state=${uid}`;
+        const link = `${DISCORD_LINK_TEMPLATE}?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodedUri}&${scopeArr}&state=${uid}`;
         return link;
     }
 }

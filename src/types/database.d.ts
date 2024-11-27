@@ -1,5 +1,3 @@
-import { eabort } from "../helpers";
-
 export interface IDatabase {
     init(): Promise<boolean>;
     execute(sql: string, params: (string | number)[]): Promise<boolean>;
@@ -46,21 +44,4 @@ export interface IRecordExtra {
 export interface IRecordExtraSearchOptions {
     id?: number,
     record_id?: number
-}
-
-export function validateRecordSearchOpt(opt: IAuthorizedRecordSearchOptions): keyof IAuthorizedRecordSearchOptions {
-    const keys = ['id', 'uid', 'discord_uid'] as const; // Define valid keys
-    const definedKeys = keys.filter(key => opt[key] !== undefined);
-
-    if (definedKeys.length !== 1) {
-        eabort('Failed to validate database search options.', opt);
-    }
-
-    return definedKeys[0];
-}
-
-export function validateRecordExtraSearchOpt(opt: IRecordExtraSearchOptions): void {
-    if ((!opt.id && !opt.record_id) || (opt.id && opt.record_id)) {
-        eabort('Failed to validate database search options.', opt);
-    }
 }
