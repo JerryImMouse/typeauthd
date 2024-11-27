@@ -1,4 +1,6 @@
 import winston, {format} from "winston";
+import DailyRotateFile from 'winston-daily-rotate-file';
+import { Configration } from "./config";
 
 export type LogMsg = string;
 export type LogCtx = object;
@@ -12,6 +14,7 @@ export enum LogLevel {
 
 export class Logger {
     private static _instance?: Logger;
+    private static _name = 'typeauthd';
 
     private readonly _logger: winston.Logger;
 
@@ -32,11 +35,17 @@ export class Logger {
     }
 
     private static _getTransports() {
+        const config = Configration.get();
+
         const transports: Array<any> = [
             new winston.transports.Console({
               format: this._getConsole(),
             }),
-          ];
+        ];
+        
+        if (process.env.NODE_ENV === 'production') {
+            transports.push(this._getFileTransport(config.logDirPath)) // log to file on prod
+        } 
 
         return transports;
     }
@@ -55,27 +64,45 @@ export class Logger {
         );
     }
 
+    private static _getFileTransport(path: string) {
+        return new DailyRotateFile({
+          filename: `${Logger._name}-%DATE%.log`,
+          zippedArchive: true,
+          maxSize: '10m',
+          maxFiles: '14d',
+          dirname: path,
+          format: format.combine(
+            format.timestamp(),
+            format(info => {
+              info.app = this._name;
+              return info;
+            })(),
+            format.json()
+          ),
+        });
+      }
+
     private constructor() {
         this._logger = this._initWinston();
     }
     
-    public debug(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.DEBG, (ctx ? {context: ctx} : undefined));
+    public debug(msg: LogMsg, context?: LogCtx) {
+        this._log(msg, LogLevel.DEBG, context);
     }
 
-    public info(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.INFO, (ctx ? {context: ctx} : undefined));
+    public info(msg: LogMsg, context?: LogCtx) {
+        this._log(msg, LogLevel.INFO, context);
     }
 
-    public warn(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.WARN, (ctx ? {context: ctx} : undefined));
+    public warn(msg: LogMsg, context?: LogCtx) {
+        this._log(msg, LogLevel.WARN, context);
     }
 
-    public error(msg: LogMsg, ctx?: LogCtx) {
-        this._log(msg, LogLevel.ERRO, (ctx ? {context: ctx} : undefined));
+    public error(msg: LogMsg, context?: LogCtx) {
+        this._log(msg, LogLevel.ERRO, context);
     }
 
-    private _log(msg: LogMsg, level: LogLevel, ctx?: LogCtx) {
-        this._logger.log(level, msg, (ctx ? {context: ctx} : undefined));
+    private _log(msg: LogMsg, level: LogLevel, context?: LogCtx) {
+        this._logger.log(level, msg, {context: context});
     }
 }

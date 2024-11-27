@@ -14,6 +14,7 @@ export interface AppConfiguration {
     extraEnabled: boolean,
     jwtSecret: string,
     apiSecret: string,
+    logDirPath: string
     https: HttpsConfiguration
 }
 

@@ -8,14 +8,15 @@
         "extraEnabled": true,
         "jwtSecret": "jwt_is_cool",
         "apiSecret": "key",
+        "logDirPath": "./logs/",
         "https": {
             "useSSL": false,
-            "keyFile": "../cert/key.pem",
-            "certFile": "../cert/cert.pem"
+            "keyFile": "./cert/key.pem",
+            "certFile": "./cert/cert.pem"
         }
     },
     "discord": {
-        "clientId": "CLIENT_ID",
+        "clientId": "CLIENT_SECRET",
         "clientSecret": "CLIENT_SECRET",
         "redirectUri": "REDIRECT_URI"
     }

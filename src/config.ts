@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { ConfigurationData } from './types/config';
 
+const root = path.resolve(__dirname, '..');
+
 export class Configration {
     private static readonly _configPath = path.resolve(__dirname, '..', 'appconfig.json');
     private static _instance: Configration;
@@ -16,6 +18,7 @@ export class Configration {
             this._configData = JSON.parse(data);
             this._validate();
             this._adjustPaths();
+            this._ensurePaths();
         } catch (err) {
             if (err instanceof Error) 
                 eabort('Error during configuration setup.', mapErr(err));
@@ -25,8 +28,15 @@ export class Configration {
     }
 
     private _adjustPaths() {
-        this._configData.app.https.keyFile = path.normalize(path.resolve(__dirname, this.httpsKeyFile));
-        this._configData.app.https.certFile = path.normalize(path.resolve(__dirname, this.httpsCertFile));
+        this._configData.app.https.keyFile = path.normalize(path.resolve(root, this.httpsKeyFile));
+        this._configData.app.https.certFile = path.normalize(path.resolve(root, this.httpsCertFile));
+        this._configData.app.logDirPath = path.normalize(path.resolve(root, this.logDirPath));
+    }
+
+    private _ensurePaths() {
+        fs.mkdirSync(path.dirname(this.httpsKeyFile), {recursive: true});
+        fs.mkdirSync(path.dirname(this.httpsCertFile), {recursive: true});
+        fs.mkdirSync(this.logDirPath, {recursive: true});
     }
 
     // little bit messy, but works
@@ -56,6 +66,8 @@ export class Configration {
         if (!isString(app.apiSecret)) 
             eabort('Invalid or missing `app.apiSecret` in configuration.');
 
+        if (!isString(app.logDirPath))
+            eabort('Invalid or missing `app.logDirPath` in configuration.');
     
         const https = app.https;
         if (!isBoolean(https.useSSL)) 
@@ -103,6 +115,10 @@ export class Configration {
 
     public get apiSecret() {
         return this._configData.app.apiSecret;
+    }
+
+    public get logDirPath() {
+        return this._configData.app.logDirPath;
     }
 
     public get httpsUseSSL() {
