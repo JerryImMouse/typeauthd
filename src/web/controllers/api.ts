@@ -3,6 +3,7 @@ import { checkApiToken } from '../middlewares/auth';
 import { findRecordByBody, findRecordByQuery, validateToken } from '../middlewares/api';
 import { WebHelpers } from '../helpers';
 import { RecordExtendedRequest } from '../../types/web';
+import { Database, RecordExtra } from '../../database/generic';
 
 const apiStuff = [checkApiToken, findRecordByQuery, validateToken];
 
@@ -14,6 +15,7 @@ export class ApiController {
         router.get('/identify', apiStuff, this.getIdentify);
         router.get('/roles', apiStuff, this.getRoles);
         router.get('/guilds', apiStuff, this.getGuilds);
+        router.get('/extra', [checkApiToken, findRecordByQuery], this.getExtraData);
         router.post('/delete', [checkApiToken, findRecordByBody], this.postDelete);
         router.get('/link', this.getLink);
         return router;
@@ -48,6 +50,19 @@ export class ApiController {
         }
 
         res.status(200).json({roles: guildMemberData.roles});
+    }
+
+    public static async getExtraData(req: RecordExtendedRequest, res: Response) {
+        const record = req.record!;
+
+        record.extra = await RecordExtra.find(Database.getDbImpl(), {record_id: record.id}) ?? undefined // record extended returns empty extras for perf
+
+        if (!record.extra) {
+            res.status(404).json({error: "Extras Not Found"});
+            return;
+        }
+
+        res.status(200).contentType('application/json').send(record.extra.json); // manually set content-type because our `json` field is a json str already
     }
 
     public static async getGuilds(req: RecordExtendedRequest, res: Response) {

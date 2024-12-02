@@ -80,6 +80,6 @@ export class AuthController {
         // second save to save extra data
         await record.save();
 
-        res.send('Success');
+        res.redirect(301, '/html/success.html');
     }
 }

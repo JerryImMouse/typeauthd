@@ -112,7 +112,7 @@ export class AuthorizedRecord implements IAuthorizedRecord {
         return true;
     }
 
-    public static async find(db: IDatabase, options: IAuthorizedRecordSearchOptions): Promise<AuthorizedRecord | null> {
+    public static async find(db: IDatabase, options: IAuthorizedRecordSearchOptions, lookExtra: boolean = false): Promise<AuthorizedRecord | null> {
         const key = getValidRecordSearchOpt(options);
         const value = options[key]!;
 
@@ -124,8 +124,12 @@ export class AuthorizedRecord implements IAuthorizedRecord {
         if (!res) {
             return null;
         }
+        let extra: RecordExtra | undefined = undefined;
+        
+        if (lookExtra) {
+            extra = await this._createExtraIfNeeded(db, res.id!, JSON.stringify({})) ?? undefined; // res.id should not be null...
+        }
 
-        let extra = await this._createExtraIfNeeded(db, res.id!, JSON.stringify({})) ?? undefined; // res.id should not be null...
         return new AuthorizedRecord(db, res.uid, res.discord_uid, res.access_token, res.refresh_token, res.expires,res.updated_at, res.id, extra);
     }
 
