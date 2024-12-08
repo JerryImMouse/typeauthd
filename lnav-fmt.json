@@ -1,0 +1,65 @@
+{
+    "$schema": "https://lnav.org/schemas/format-v1.schema.json",
+    "typeauthd_log": {
+        "title": "TypeAuthd Log",
+        "description": "Log entries from the TypeAuthd application",
+        "multiline": false,
+        "json": true,
+        "level-field": "level",
+        "level": {
+            "info": "info",
+            "warn": "warn",
+            "error": "error"
+        },
+        "opid-field": "app",
+        "value": {
+            "app": {
+                "kind": "string",
+                "identifier": true
+            },
+            "context": {
+                "kind": "string"
+            },
+            "level": {
+                "kind": "string"
+            },
+            "message": {
+                "kind": "string"
+            },
+            "timestamp": {
+                "kind": "string"
+            }
+        },
+        "sample": [
+            {
+                "line": "{\"app\":\"typeauthd\",\"level\":\"info\",\"message\":\"Server started at 2424\",\"timestamp\":\"2024-11-27T17:40:21.177Z\"}"
+            }
+        ],
+        "line-format": [
+            "[",
+            {
+                "field": "timestamp",
+                "timestamp-format": "%Y-%m-%dT%H:%M:%S.%LZ"
+            },
+            "] ",
+            {
+                "field": "app"
+            },
+            ": [",
+            {
+                "field": "level",
+                "text-transform": "uppercase"
+            },
+            "]: ",
+            {
+                "field": "message"
+            },
+            " [CONTEXT] -> ",
+            {
+                "field": "context",
+                "default-value": "empty"
+            }
+        ]
+    }
+}
+

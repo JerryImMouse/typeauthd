@@ -7,6 +7,8 @@ import { Configration } from "./config";
 Database.getDbImpl().init(); // initialize database instance
 const config = Configration.get();
 
+logRuntimeInfo(config);
+
 const app = new WebApp();
 
 app.configure();
@@ -19,5 +21,17 @@ process.once("SIGTERM", getSignalHandler('SIGTERM', server));
 process.once("SIGINT", getSignalHandler('SIGINT', server));
 
 server.listen(config.port, () => {
-    Logger.get().info(`${(config.httpsUseSSL ? 'Secure server' : 'Server')} started at ${config.port}`);
+    Logger.get().info(`Server is listening for incoming connections...`);
 })
+
+function logRuntimeInfo(config: Configration) {
+    const logger = Logger.get();
+    const nodeEnv = process.env.NODE_ENV || "Not Set";
+    const dbProvider = config.databaseProvider;
+    const nativeSSL = config.httpsUseSSL;
+
+    logger.info(`Node environment: ${nodeEnv}`);
+    logger.info(`Database provider in use: ${dbProvider}`);
+    logger.info(`NativeSSL: ${nativeSSL}`);
+    logger.info(`Running port: ${config.port}`);
+}

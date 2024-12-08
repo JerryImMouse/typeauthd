@@ -8,13 +8,22 @@ const root = path.resolve(__dirname, '..');
 
 export class Configration {
     private static readonly _configPath = path.resolve(__dirname, '..', 'appconfig.json');
+    private static readonly _devConfigPath = path.resolve(__dirname, '..', 'appconfig.dev.json');
+
     private static _instance: Configration;
     
     private _configData!: ConfigurationData; // we are exiting on configuration fail, so ! is ok here, i think
 
     private constructor() {
+        let configPath = Configration._configPath;
+
+        // if there is a dev config and we are not in production environment, use it!
+        if (process.env.NODE_ENV != 'production' && fs.existsSync(Configration._devConfigPath)) {
+            configPath = Configration._devConfigPath;
+        }
+
         try {
-            const data = fs.readFileSync(Configration._configPath, {encoding: 'utf-8'});
+            const data = fs.readFileSync(configPath, {encoding: 'utf-8'});
             this._configData = JSON.parse(data);
             this._validate();
             this._adjustPaths();
