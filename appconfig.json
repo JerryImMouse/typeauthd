@@ -16,8 +16,8 @@
         }
     },
     "discord": {
-        "clientId": "1143828623132991551",
-        "clientSecret": "g2_f37AIHrGeGv896tHLKq87niS5aQZl",
+        "clientId": "CLIENT_ID",
+        "clientSecret": "CLIENT_SECRET",
         "redirectUri": "http://127.0.0.1:2424/auth/login/cb"
     }
 }
