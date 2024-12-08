@@ -17,3 +17,6 @@ cert
 
 #ignore production logs
 logs
+
+# ignore hidden files
+.*
