@@ -17,7 +17,7 @@ export class WebApp {
     }
 
     configure() {
-        this._express.set('views', path.resolve(__dirname, 'views'));
+        this._express.set('views', path.join(__dirname, '..', '..', 'views'));
         this._express.set('view engine', 'pug');
     }
 
