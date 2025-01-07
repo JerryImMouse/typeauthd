@@ -21,7 +21,8 @@ TypeAuthD supports native SSL certificates out-of-the-box or can operate behind 
             "useSSL": false, // Whether to use SSL for the application
             "keyFile": "../cert/key.pem", // Path to the private key file for SSL
             "certFile": "../cert/cert.pem" // Path to the certificate file for SSL
-        }
+        },
+        "locale": "en" // Locale to use, you can choose one of the ./locales/locales.json
     },
     "discord": {
         "clientId": "CLIENT_ID", // Discord application client ID

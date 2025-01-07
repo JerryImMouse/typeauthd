@@ -5,121 +5,149 @@
     font-style: normal;
 }
 
-html {
+html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;
 }
 
 body {
     display: flex;
     flex-direction: column;
+    justify-content: space-between; /* Ensures footer stays at the bottom */
+    align-items: center;
+    background-color: #212529;
+}
+
+.h1 {
+    font-family: "JetBrains Mono";
+    color: #DEE2E6;
+}
+
+.h2, .p {
+    font-family: "JetBrains Mono";
+    color: #DEE2E6;
+}
+
+.h2 {
+    font-size: 1.3em;
+}
+
+.p {
+    font-size: 1.1em;
+}
+
+.title {
+    font-weight: 600;
+    margin-top: 50px;
+    padding-bottom: 10px;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to right, #24243E, #302B63, #0F0C29);
+    padding: 15px;
+    background-color: #1A1D20;
+    border-radius: 5px;
+    width: 90%;
+    max-width: 350px;
+}
+
+.center {
+    text-align: center;
+    align-self: center;
+}
+
+.copyright {
+    display: none;
+}
+
+.info-btns {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
     width: 100%;
-    height: 100%;
-    margin: 0;
+}
+
+.button {
+    padding: 10px;
+    background-color: #5BC0DE;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+    font-size: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.layout-btn {
+    margin: 10px;
+    width: 100%;
+    height: 50px;
+    font-size: 1.3em;
+}
+
+.button:hover {
+    background-color: #51A8C2;
 }
 
 footer {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
     margin-top: auto;
+    padding: 10px 0;
     width: 100%;
-    padding: 10px 20px;
-    background: none;
-    position: relative;
 }
 
-.git-container {
-    display: flex;
-    align-items: center;
-    color: white;
-    padding-left: 10px;
-    cursor: pointer;
-}
+/* PC-specific styles */
+@media (min-width: 768px) {
+    .content {
+        margin-top: 20px;
+        width: 60%;
+        max-width: 600px;
+        padding: 20px;
+        margin-bottom: auto;
+    }
 
-.git-img {
-    width: 45px;
-    height: auto;
-    margin-right: 5px;
-}
+    .info-btns {
+        flex-direction: row;
+        justify-content: center;
+        gap: 20px;
+        width: 100%;
+    }
 
-.git-link {
-    text-decoration: none;
-}
+    .button {
+        padding: 10px 20px;
+    }
 
-.git-link:hover p {
-    color: rgb(202, 202, 202);
-}
+    .layout-btn {
+        width: auto;
+        height: auto;
+        font-size: 1.2em;
+        width: auto;
+    }
 
-.git {
-    text-align: left;
-    font-size: 1.7em;
-    margin: 0;
-    font-family: 'JetBrains Mono';
-    font-weight: bold;
-    transition: 0.5s;
-}
+    .copyright {
+        display: block;
+    }
 
-.license-info {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    color: #7E7E7E;
-    font-size: 0.8em;
-    margin: 0;
-    font-family: 'JetBrains Mono';
-}
+    .mra {
+        margin-right: auto;
+    }
 
-.name {
-    position: absolute;
-    right: 20px;
-    padding-right: 10px;
-    padding-bottom: 10px;
-    text-align: right;
-    color: white;
-    font-size: 1.8em;
-    margin: 0;
-    font-family: 'JetBrains Mono';
-    font-weight: bold;
-}
-
-.trouble {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    color: white;
-    font-family: 'JetBrains Mono';
-    font-weight: bold;
-    font-size: 0.8em;
-    text-align: left;
-}
-
-.trouble a {
-    text-decoration: none;
-}
-
-.license-info a {
-    text-decoration: none;
-    color: inherit;
-}
-
-.info-container {
-    display: flex;
-    background-color: #444444;
-    width: 30%;
-    height: 65%;
-    border-radius: 8px;
-    margin-top: auto;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.info-container p, h1, h2 {
-    font-family: 'JetBrains Mono';
+    .mla {
+        margin-left: auto;
+    }
 }

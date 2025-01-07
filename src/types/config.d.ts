@@ -15,7 +15,8 @@ export interface AppConfiguration {
     jwtSecret: string,
     apiSecret: string,
     logDirPath: string
-    https: HttpsConfiguration
+    https: HttpsConfiguration,
+    locale: string
 }
 
 export interface HttpsConfiguration {

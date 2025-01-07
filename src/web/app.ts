@@ -5,6 +5,8 @@ import { AuthController } from "./controllers/auth";
 import { ApiController } from "./controllers/api";
 import path from "path";
 import http2Express from "http2-express-bridge";
+import { RootController } from './controllers/root';
+import { getLocale } from './middlewares/auth';
 
 // erghh...
 export class WebApp {
@@ -25,6 +27,7 @@ export class WebApp {
 
     controllers() {
         this._express.use(express.urlencoded({ extended: true }));
+        this._express.use('/', RootController.collectToRouter());
         this._express.use('/api', ApiController.collectToRouter());
         this._express.use('/auth', AuthController.collectToRouter());
     }

@@ -2,10 +2,11 @@ import {Request as ExRequest, Response as ExResponse} from 'express';
 import { Logger } from '../logging';
 import { Configration } from '../config';
 import { AuthorizedRecord } from '../database/generic';
-import { DiscordCodeQuery, DiscordCodeResponse, DiscordGuildMemberObject, DiscordPartialGuildObject, DiscordRawCodeQuery, DiscordUserObject, IdentifyQueryParams, LinkQueryParams, RolesQueryParams } from '../types/web';
+import { DataParams, DiscordCodeQuery, DiscordCodeResponse, DiscordGuildMemberObject, DiscordPartialGuildObject, DiscordRawCodeQuery, DiscordUserObject, IdentifyQueryParams, LinkQueryParams, RolesQueryParams } from '../types/web';
 import { IDatabase } from '../types/database';
+import { LocaleManager } from '../locale';
 
-
+const locales = LocaleManager.get();
 const config = Configration.get();
 const CLIENT_ID = config.discordClientId;
 const CLIENT_SECRET = config.discordClientSecret;
@@ -23,8 +24,10 @@ export class WebHelpers {
     
     /// Express helpers
     
-    public static respond(res: ExResponse, msg: string, code: number, help: string) {
-        res.status(code).render('error', {title: 'Error', errorCode: code, errorDesc: msg, help: help})
+    public static respondErr(res: ExResponse, msg: string, code: number, help: string, locale: string | undefined = undefined) {
+        const errorText = locales.loc("error_title", locale ?? config.locale);
+
+        res.status(code).render('error', {title: 'Error', statusCode: code, errorTitle: msg, errorDescription: help, errorText})
     }
 
     /// Discord Related Helpers
@@ -38,7 +41,7 @@ export class WebHelpers {
         return {state: query.state!, code: query.code!};
     }
 
-    public static async exchangeCode(code: string): Promise<DiscordCodeResponse | null> {
+    public static async exchangeCode(code: string, req: ExRequest): Promise<DiscordCodeResponse | null> {
         const params = new URLSearchParams({
             'grant_type': 'authorization_code',
             'code': code,
@@ -55,7 +58,7 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            WebHelpers.handleDiscordError(response, '[DISCORD]: Error during code exchange.');
+            WebHelpers.handleDiscordError(response, '[DISCORD]: Error during code exchange.', req);
             return null;
         }
 
@@ -63,7 +66,7 @@ export class WebHelpers {
         return tokenData;
     }
 
-    public static async identify(access_token: string): Promise<DiscordUserObject | null> {
+    public static async identify(access_token: string, req: ExRequest): Promise<DiscordUserObject | null> {
         const response = await fetch(`${DISCORD_API_URL}/users/@me`, {
             method: 'GET',
             headers: {
@@ -72,14 +75,14 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, '[DISCORD] Error fetching identify scope.');
+            this.handleDiscordError(response, '[DISCORD] Error fetching identify scope.', req);
             return null;
         }
 
         return await response.json();
     }
 
-    public static async guildMember(access_token: string, guildId: string): Promise<DiscordGuildMemberObject | null> {
+    public static async guildMember(access_token: string, guildId: string, req: ExRequest): Promise<DiscordGuildMemberObject | null> {
         const uri = `${DISCORD_API_URL}/users/@me/guilds/${guildId}/member`;
         const response = await fetch(uri, {
             method: 'get',
@@ -89,14 +92,14 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, `[DISCORD] Failed to retrieve guild member.`);
+            this.handleDiscordError(response, `[DISCORD] Failed to retrieve guild member.`, req);
             return null;
         }
 
         return response.json();
     }
 
-    public static async guilds(access_token: string): Promise<DiscordPartialGuildObject[] | null> {
+    public static async guilds(access_token: string, req: ExRequest): Promise<DiscordPartialGuildObject[] | null> {
         const uri = `${DISCORD_API_URL}/users/@me/guilds`;
         const response = await fetch(uri, {
             method: 'get',
@@ -106,14 +109,14 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, `[DISCORD] Failed to retrieve user guilds.`);
+            this.handleDiscordError(response, `[DISCORD] Failed to retrieve user guilds.`, req);
             return null;
         }
 
         return response.json();
     }
 
-    public static async ensureToken(record: AuthorizedRecord, httpCheck: boolean = false): Promise<boolean> {
+    public static async ensureToken(record: AuthorizedRecord, req: ExRequest, httpCheck: boolean = false): Promise<boolean> {
         if (httpCheck) {
             const response = await fetch(`${DISCORD_API_URL}/users/@me`, {
                 method: 'GET',
@@ -125,7 +128,7 @@ export class WebHelpers {
             // it means our token is not valid
             if (!response.ok) {
                 Logger.get().debug("[DISCORD] Access token failed to retieve data, refreshing...", {statusCode: response.status})
-                const result = await WebHelpers.refreshToken(record, true);
+                const result = await WebHelpers.refreshToken(record, req, true);
                 return result;
             }
         }
@@ -139,10 +142,10 @@ export class WebHelpers {
             return true;
 
         Logger.get().debug('[DISCORD] Token expired by expire time, refreshing...', {uid: record.uid, recordUpdateDate: recordUpdateDate, currentDate: currentDate, expires: record.expires});
-        return await this.refreshToken(record, true);
+        return await this.refreshToken(record, req, true);
     }
 
-    public static async refreshToken(record: AuthorizedRecord, save: boolean = true): Promise<boolean> {
+    public static async refreshToken(record: AuthorizedRecord, req: ExRequest, save: boolean = true): Promise<boolean> {
         const refreshToken = record.refresh_token;
         const params = new URLSearchParams({
             'grant_type': 'refresh_token',
@@ -159,7 +162,7 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, `[DISCORD] Failed to refresh Discord Token for ${record.uid}|${record.discord_uid}.`);
+            this.handleDiscordError(response, `[DISCORD] Failed to refresh Discord Token for ${record.uid}|${record.discord_uid}.`, req);
             return false;
         }
 
@@ -173,12 +176,22 @@ export class WebHelpers {
     }
 
 
-    public static async handleDiscordError(res: Response, msg: string) {
+    public static async handleDiscordError(res: Response, msg: string, req: ExRequest) {
         const json = await res.json();
-        Logger.get().error(msg, json);
+        const data = {
+            res: json,
+            url: req.url,
+            ip: req.ip,
+        }
+        
+        Logger.get().error(msg, data);
     }
 
     /// TypeAuthD Related Helpers
+
+    public static getObjCode(data: object) {
+        return btoa(JSON.stringify(data));
+    }
 
     public static setExtraIfAny(record: AuthorizedRecord, data: Record<string, string | number>) {
         const json = JSON.stringify(data);
@@ -236,6 +249,19 @@ export class WebHelpers {
         }
 
         return { uid } as LinkQueryParams;
+    }
+
+    public static validateDataParams(query: any): DataParams | null {
+        if (!query || typeof query !== 'object') {
+            return null;
+        }
+
+        const {c}= query;
+        if (typeof c !== 'string' || c.trim() === '') {
+            return null;
+        }
+
+        return { c } as DataParams; 
     }
 
     public static async fetchRecordByMethod(db: IDatabase, id: string, method: SearchMethod): Promise<AuthorizedRecord | undefined> {

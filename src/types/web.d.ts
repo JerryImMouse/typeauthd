@@ -92,10 +92,19 @@ export interface LinkQueryParams {
     uid: string
 }
 
+export interface DataParams {
+    c: string
+}
+
 /// Express Helper Structs
 
 export interface RecordExtendedRequest extends ExRequest {
     record?: AuthorizedRecord
 }
 
+export interface LocaleExtendedRequest extends ExRequest {
+    locale?: string
+}
+
+export type TypeAuthDExtendedRequest = RecordExtendedRequest | LocaleExtendedRequest;
 export type AuthServer = Server | Http2SecureServer

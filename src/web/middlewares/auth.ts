@@ -1,6 +1,7 @@
 import {Request, Response, NextFunction} from 'express';
 import { Configration } from '../../config';
 import { Database } from '../../database/generic';
+import { LocaleExtendedRequest } from '../../types/web';
 
 const config = Configration.get();
 const db = Database.getDbImpl();
@@ -20,5 +21,10 @@ export function checkApiToken(req: Request, res: Response, next: NextFunction): 
         return;
     }
 
+    next();
+}
+
+export function getLocale(req: LocaleExtendedRequest, res: Response, next: NextFunction): void {
+    req.locale = req.query['loc']?.toString() ?? config.locale;
     next();
 }

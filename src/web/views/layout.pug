@@ -1,22 +1,18 @@
+doctype html
 html 
     head 
-        title= 'TypeAuthd - ' + title
+        title= 'TypeAuthd | ' + title
         link(rel='stylesheet' href='/css/style.css')
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        meta(charset="UTF-8")
         block header
     body
-        p.trouble
-            | Having trouble with the service? Contact me on <a href="https://discord.com/">Discord</a> @jerryimmouse
-        .info-container 
-            block content
-        footer
-            a.git-link(href= 'https://github.com/JerryImMouse/typeauthd')
-                .git-container
-                    img.git-img(src='/images/git.png' alt='GitHub')
-                    p.git GitHub
-            p.license-info
-                | The code for both the backend and frontend of this website is distributed under the <a href='https://www.gnu.org/licenses/agpl-3.0.html' style='color: white'>GNU Affero General Public License v3.0.</a><br>
-                | If you use this software to provide a service, you must make the source code available to the users of that service.<br>
-                | Copyright © 2024, JerryImMouse.
-            p.name
-                | TypeAuthD
+        h1.h1.title= "TypeAuthD" 
+        .content 
+            block content 
+        footer 
+            .info-btns 
+                a(href="#git").button.layout-btn.mra= "GitHub"
+                p.copyright.p= "Copyright 2024 JerryImMouse"
+                a(href="#license").button.layout-btn.mla= "AGPL 3.0"
         block scripts

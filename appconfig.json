@@ -13,7 +13,8 @@
             "useSSL": false,
             "keyFile": "./cert/key.pem",
             "certFile": "./cert/cert.pem"
-        }
+        },
+        "locale": "en"
     },
     "discord": {
         "clientId": "CLIENT_ID",

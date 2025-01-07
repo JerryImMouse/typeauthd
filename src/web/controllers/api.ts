@@ -25,7 +25,7 @@ export class ApiController {
         // got via middleware, so it cannot be undefined
         const record = req.record!;
 
-        const identifyData = await WebHelpers.identify(record.access_token);
+        const identifyData = await WebHelpers.identify(record.access_token, req);
         if (!identifyData) {
             res.status(500).json({error: 'Unable to retrieve identify data'});
             return;
@@ -43,7 +43,7 @@ export class ApiController {
         
         const record = req.record!;
 
-        const guildMemberData = await WebHelpers.guildMember(record.access_token, query.guildId);
+        const guildMemberData = await WebHelpers.guildMember(record.access_token, query.guildId, req);
         if (!guildMemberData) {
             res.status(500).json({error: 'Unable to retrieve guild member object'});
             return;
@@ -67,7 +67,7 @@ export class ApiController {
 
     public static async getGuilds(req: RecordExtendedRequest, res: Response) {
         const record = req.record!;
-        const guilds = await WebHelpers.guilds(record.access_token);
+        const guilds = await WebHelpers.guilds(record.access_token, req);
         if (!guilds) {
             res.status(500).json({error: 'Unable to retrieve user guilds.'});
             return;

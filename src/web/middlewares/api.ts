@@ -54,7 +54,7 @@ export async function validateToken(req: RecordExtendedRequest, res: Response, n
     }
 
     const record = req.record;
-    const result = await WebHelpers.ensureToken(record, true);
+    const result = await WebHelpers.ensureToken(record, req, true);
     if (!result) {
         res.status(500).send({error: 'Unable to refresh token'});
         return;

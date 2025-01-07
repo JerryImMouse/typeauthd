@@ -77,6 +77,9 @@ export class Configration {
 
         if (!isString(app.logDirPath))
             eabort('Invalid or missing `app.logDirPath` in configuration.');
+
+        if (!isString(app.locale))
+            eabort('Invalid or missing `app.locale` in configuration.');
     
         const https = app.https;
         if (!isBoolean(https.useSSL)) 
@@ -128,6 +131,10 @@ export class Configration {
 
     public get logDirPath() {
         return this._configData.app.logDirPath;
+    }
+
+    public get locale() {
+        return this._configData.app.locale;
     }
 
     public get httpsUseSSL() {

@@ -1,0 +1,22 @@
+{
+    "auth_success": "Authentication successful",
+    "auth_success_details": "You can continue using an app.",
+
+    "auth_required": "Authentication required",
+    "auth_required_details_uid": "Press the button below, it will redirect you to discord auth website.",
+    "auth_required_details": "You can't authenticate without user ID provided by an external application.",
+
+    "error_title": "Error occured during authentication",
+    "error500": "Server error occured during authentication.",
+
+    "invalid_code": "Invalid Code Provided", 
+    "invalid_code_Details": "Try reauthorizing, probably you've spoiled discord provided code.", 
+
+    "unable_exchange_code": "Unable to exchange code", 
+    "unable_exchange_code_details": "Try reauthorizing, probably you've spoiled discord provided code.", 
+
+    "ok267": "Tokens updated, but credentials left untouched",
+    "ok267_details": "Just do not authorize anymore, you're already authorized.",
+
+    "auth_btn": "Authorize"
+}

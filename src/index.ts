@@ -3,9 +3,11 @@ import { Database } from "./database/generic";
 import { Logger } from "./logging";
 import { createServer, getSignalHandler } from "./helpers";
 import { Configration } from "./config";
+import { LocaleManager } from "./locale";
 
 Database.getDbImpl().init(); // initialize database instance
 const config = Configration.get();
+const locales = LocaleManager.get();
 
 logRuntimeInfo(config);
 
@@ -30,8 +32,9 @@ function logRuntimeInfo(config: Configration) {
     const dbProvider = config.databaseProvider;
     const nativeSSL = config.httpsUseSSL;
 
-    logger.info(`Node environment: ${nodeEnv}`);
-    logger.info(`Database provider in use: ${dbProvider}`);
+    logger.info(`Node environment: '${nodeEnv}'`);
+    logger.info(`Database provider in use: '${dbProvider}'`);
     logger.info(`NativeSSL: ${nativeSSL}`);
     logger.info(`Running port: ${config.port}`);
+    logger.info(`Locale in use: '${locales.locale}'`)
 }
