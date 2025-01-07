@@ -34,6 +34,10 @@ TypeAuthD supports native SSL certificates out-of-the-box or can operate behind 
 ```
 Make sure to fill in all the necessary fields in `appconfig.json` for proper configuration.
 
+## Logging
+This application supports file handlers(only when `NODE_ENV=production`), you can find `lnav-fmt.json` format for `lnav` to read typeauthd logs in pretty formatting.   
+Whenever server results in 500 error, it throws `client logs` to the user, so he can download them and report this situation, you, as a host, can find the situation in logs by looking over them by `id` field. This one helps in searching the context error happened in.
+
 ## Routes Overview
 
 This app exposes some intresting routes you should know.
