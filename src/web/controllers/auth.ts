@@ -5,10 +5,12 @@ import { Logger } from '../../logging';
 import { LocaleManager } from '../../locale';
 import { LocaleExtendedRequest } from '../../types/web';
 import { getLocale } from '../middlewares/auth';
+import { Configration } from '../../config';
 
 // database should be already initialized here
 const db = Database.getDbImpl();
 const locales = LocaleManager.get();
+const config = Configration.get();
 
 /// Here is the format
 /// getPATH_PATH_... - GET /auth/PATH/PATH/...
@@ -108,16 +110,19 @@ export class AuthController {
         
         // first save call to fill id field, required for ensureExtra()
         await record.save();
-        // create extra record in database (if any turned on)
-        await record.ensureExtra();
-        
-        WebHelpers.setExtraIfAny(record, {
-            name: identifyScopeData.username,
-            ...(identifyScopeData.global_name !== undefined && { global_name: identifyScopeData.global_name })
-        });
 
-        // second save to save extra data
-        await record.save();
+        if (config.extraEnabled) {
+            // create extra record in database (if any turned on)
+            await record.ensureExtra();
+            
+            WebHelpers.setExtraIfAny(record, {
+                name: identifyScopeData.username,
+                ...(identifyScopeData.global_name !== undefined && { global_name: identifyScopeData.global_name })
+            });
+    
+            // second save to save extra data
+            await record.save();
+        }
 
         const auth_success = locales.loc('auth_success', locale);
         const auth_success_details = locales.loc('auth_success_details', locale);
