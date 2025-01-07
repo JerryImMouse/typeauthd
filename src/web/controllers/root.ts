@@ -10,7 +10,7 @@ export class RootController {
     }
 
     public static async getRoot(req: Request, res: Response) {
-        res.redirect('/auth/login');
+        res.redirect('auth/login');
     }
 
     public static async getLogs(req: Request, res: Response) {

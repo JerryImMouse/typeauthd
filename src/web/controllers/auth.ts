@@ -24,7 +24,6 @@ export class AuthController {
     }
 
     public static async getLogin(req: LocaleExtendedRequest, res: Response) {
-        const locale = req.locale!;
         let uid = req.query['uid']?.toString() ?? undefined;
 
         const locale = req.locale!;
