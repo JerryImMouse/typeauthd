@@ -93,7 +93,7 @@ export interface LinkQueryParams {
 }
 
 export interface DataParams {
-    c: string
+    b64: string
 }
 
 /// Express Helper Structs

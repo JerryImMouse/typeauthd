@@ -24,6 +24,7 @@ export class AuthController {
     }
 
     public static async getLogin(req: LocaleExtendedRequest, res: Response) {
+        const locale = req.locale!;
         let uid = req.query['uid']?.toString() ?? undefined;
 
         const locale = req.locale!;
@@ -60,15 +61,24 @@ export class AuthController {
             const data = {
                 ip: req.ip,
                 http_ver: req.httpVersion,
+                protocol: req.protocol,
                 url: req.url,
+
+                err: "Unable to fetch identify scope",
+            }
+            const jsonData = JSON.stringify(data);
+            const dataId = {
+                id: btoa(jsonData),
+                data
             }
 
             // TODO: Add errLogs with above
-            WebHelpers.respondErr(
+            WebHelpers.respondErrWithLogs(
                 res, 
                 'Unable to fetch identify scope', 
                 500, 
-                'You cannot do anything with this, address the issue to developer', 
+                'You cannot do anything with this, address the issue to developer',
+                btoa(JSON.stringify(dataId)),
                 locale
             );
             return;

@@ -30,6 +30,13 @@ export class WebHelpers {
         res.status(code).render('error', {title: 'Error', statusCode: code, errorTitle: msg, errorDescription: help, errorText})
     }
 
+    public static respondErrWithLogs(res: ExResponse, msg: string, code: number, help: string, data: string, locale: string | undefined = undefined) {
+        const errorText = locales.loc("error_title", locale ?? config.locale);
+        res.status(code).render('error', {title: "Error", statusCode: code, errorTitle: msg, errorDescription: help, errorText, logsLink: `/logs?b64=${btoa(data)}`})
+        
+        Logger.get().error("500 - Server Error", {err: data});
+    }
+
     /// Discord Related Helpers
 
     public static parseCodeQuery(req: ExRequest): DiscordCodeQuery | null {
@@ -256,12 +263,12 @@ export class WebHelpers {
             return null;
         }
 
-        const {c}= query;
-        if (typeof c !== 'string' || c.trim() === '') {
+        const {b64}= query;
+        if (typeof b64 !== 'string' || b64.trim() === '') {
             return null;
         }
 
-        return { c } as DataParams; 
+        return { b64 } as DataParams; 
     }
 
     public static async fetchRecordByMethod(db: IDatabase, id: string, method: SearchMethod): Promise<AuthorizedRecord | undefined> {
