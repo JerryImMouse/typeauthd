@@ -84,7 +84,7 @@ export class ApiController {
             return;
         }
 
-        const link = WebHelpers.generateAuthLink(query.uid);
+        const link = WebHelpers.generateAuthLink(btoa(query.uid));
         res.status(200).json({link});
     }
 

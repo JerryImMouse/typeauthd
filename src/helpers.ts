@@ -14,6 +14,11 @@ export function eabort(msg: LogMsg, ctx?: LogCtx, exitCode: number = 1) {
     process.exit(exitCode);
 }
 
+export function cfgabort(msg: LogMsg, exitCode: number = 1) {
+    console.error(`CONFIGURATION ERROR: ${msg}`);
+    process.exit(exitCode);
+}
+
 export function mapErr(err: Error) {
     return {
         msg: err.message,

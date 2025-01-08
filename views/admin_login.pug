@@ -1,0 +1,10 @@
+extends layout.pug 
+
+block header
+    link(rel="stylesheet", href="/css/admin.css")
+
+block content
+    h2.h2= login_title
+    form(action="login", method="post").form
+        input(id="api_token" name="token" type="password" placeholder= login_token_name required).input.center-self
+        input(type="submit" value= login_submit_btn style="margin-top: 10px;").center.button

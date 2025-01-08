@@ -13,9 +13,9 @@ logRuntimeInfo(config);
 
 const app = new WebApp();
 
-app.configure();
-app.controllers();
+app.configure(config.trustProxy);
 app.middlewares();
+app.controllers();
 
 const server = createServer(config.httpsUseSSL, app.application());
 

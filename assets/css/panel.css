@@ -1,0 +1,103 @@
+.search-form {
+    display: flex;
+    flex-direction: column;  /* Change to column to stack input and button vertically */
+    width: 90%;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.search-input {
+    height: 30px;
+    width: 100%;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    padding: 0 10px;
+}
+
+.records_cont {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: auto;
+    height: 64%;
+}
+
+.content {
+    height: 70%;
+    width: 90%;
+    justify-content: flex-start;
+}
+
+.pages {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.page_link {
+    color: white;
+    text-decoration: none;
+    margin: 5px;
+}
+
+.page_link:hover {
+    color:#ccc
+}
+
+.record-card {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    outline: 1px solid white;
+    padding: 5px;
+    border-radius: 5px;
+    width: 90%;
+}
+
+.record-card p {
+    font-size: 0.8em;
+}
+
+.records_cont::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.records_cont::-webkit-scrollbar-thumb {
+    background-color: white; 
+    border-radius: 10px;
+    transition: transform 0.2s, background-color 0.2s;
+    visibility: visible;
+}
+
+.records_cont::-webkit-scrollbar-thumb:hover {
+    background-color: #ccc;
+    transform: scale(1.2);
+}
+
+.records_cont::-webkit-scrollbar-thumb:active {
+    background-color: #bbb;
+    transform: scale(1.25);
+}
+
+.records_cont::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+
+.records_cont::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.records_cont {
+    scrollbar-width: thin;
+    scrollbar-color: white transparent;
+}
+
+@media (min-width: 768px) {
+    .record-card p {
+        font-size: 1.1em;
+    }
+}

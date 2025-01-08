@@ -15,14 +15,18 @@ TypeAuthD supports native SSL certificates out-of-the-box or can operate behind 
     "app": {
         "port": 2424, // Port to bind the Express server
         "extraEnabled": true, // Enable an extra table in the database for custom information (JSON structure)
-        "jwtSecret": "jwt_is_cool", // JWT secret (currently not in use)
         "apiSecret": "key", // API secret used as a bearer token for authorization in API requests
         "https": {
             "useSSL": false, // Whether to use SSL for the application
             "keyFile": "../cert/key.pem", // Path to the private key file for SSL
             "certFile": "../cert/cert.pem" // Path to the certificate file for SSL
         },
-        "locale": "en" // Locale to use, you can choose one of the ./locales/locales.json
+        "locale": "en", // Locale to use, you can choose one of the ./locales/locales.json
+        "admin": { // this category represents /admin/ route, controls pageSize in admin panel and JWT secret token to sign authorized users
+            "pageSize": 30, // Admin Panel page size, don't set large values here, content delivery could be long. Also, all searching and pagination appears on backend(i don't want to send javascript to client).
+            "jwtSecret": "jwt_is_cool" // JWT secret to sign cookie with JWT as a authorized flag
+        },
+        "pathBase": "" // path to use as `root`, needed due to reverse proxy support, so you should set the route you're exposing typeauthd
     },
     "discord": {
         "clientId": "CLIENT_ID", // Discord application client ID

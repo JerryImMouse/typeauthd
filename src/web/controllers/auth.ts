@@ -33,7 +33,7 @@ export class AuthController {
         const auth_required_details = uid ? locales.loc('auth_required_details_uid', locale) : locales.loc('auth_required_details', locale); 
         const auth_btn = locales.loc('auth_btn', locale);
         
-        res.render('login', {title: "Login", auth_required, auth_required_details, authLink: uid ? WebHelpers.generateAuthLink(atob(uid)) : undefined, auth_btn})
+        res.render('login', {title: "Login", auth_required, auth_required_details, authLink: uid ? WebHelpers.generateAuthLink(uid) : undefined, auth_btn})
     }
 
     public static async getLogin_Cb(req: LocaleExtendedRequest, res: Response) {
@@ -73,7 +73,6 @@ export class AuthController {
                 data
             }
 
-            // TODO: Add errLogs with above
             WebHelpers.respondErrWithLogs(
                 res, 
                 'Unable to fetch identify scope', 
@@ -106,7 +105,8 @@ export class AuthController {
             return;
         }
 
-        const record = await AuthorizedRecord.create(db, query.state, identifyScopeData.id, tokenStruct.access_token, tokenStruct.refresh_token, tokenStruct.expires_in);
+        const decodedState = atob(query.state);
+        const record = await AuthorizedRecord.create(db, decodedState, identifyScopeData.id, tokenStruct.access_token, tokenStruct.refresh_token, tokenStruct.expires_in);
         
         // first save call to fill id field, required for ensureExtra()
         await record.save();
