@@ -12,6 +12,7 @@ const apiStuff = [checkApiToken, findRecordByQuery, validateToken];
 export class ApiController {
     public static collectToRouter() {
         const router = Router();
+        router.get('/uuid', apiStuff, this.getUserId);
         router.get('/identify', apiStuff, this.getIdentify);
         router.get('/roles', apiStuff, this.getRoles);
         router.get('/guilds', apiStuff, this.getGuilds);
@@ -19,6 +20,14 @@ export class ApiController {
         router.post('/delete', [checkApiToken, findRecordByBody], this.postDelete);
         router.get('/link', this.getLink);
         return router;
+    }
+
+    public static async getUserId(req: RecordExtendedRequest, res: Response) {
+        const record = req.record!;
+
+        const uuid = record.uid;
+
+        res.status(200).json({uuid: uuid});
     }
 
     public static async getIdentify(req: RecordExtendedRequest, res: Response) {
