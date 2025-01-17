@@ -154,6 +154,44 @@ export class SqliteDatabase implements IDatabase {
         })
     }
 
+    // i really don't like how I called it, but.. okay
+    public selectLimitOffsetLike<T>(
+        table: string, 
+        offset: number, 
+        limit: number, 
+        data: Record<string, string | number> | undefined = undefined
+    ): Promise<T[] | null> {
+        let query = `SELECT * FROM ${table}`;
+        
+        if (data) {
+            const conditions = Object.entries(data).map(([key, value]) => {
+                if (typeof value === 'string') {
+                    return `${key} LIKE '${value}%'`;
+                } else if (typeof value === 'number') {
+                    return `${key} = ${value}`;
+                }
+                return '';
+            }).filter(Boolean).join(' OR ');
+            
+            if (conditions) {
+                query += ` WHERE ${conditions}`;
+            }
+        }
+        
+        query += ` ORDER BY id LIMIT ? OFFSET ?`;
+    
+        return new Promise((resolve, reject) => {
+            this._connection.all(query, [limit, offset], (err, rows) => {
+                if (!this._handleError(query, err)) {
+                    reject(false);
+                    return;
+                }
+    
+                resolve(rows ? rows as T[] : null);
+            });
+        });
+    }
+
     public delete(table: string, key: string, value: string | number): Promise<boolean> {
         return this.deleteOr(table, {[key]: value});
     }

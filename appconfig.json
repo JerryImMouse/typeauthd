@@ -6,7 +6,6 @@
     "app": {
         "port": 2424,
         "extraEnabled": true,
-        "jwtSecret": "jwt_is_cool",
         "apiSecret": "key",
         "logDirPath": "./logs/",
         "https": {
@@ -14,7 +13,14 @@
             "keyFile": "./cert/key.pem",
             "certFile": "./cert/cert.pem"
         },
-        "locale": "en"
+        "locale": "en",
+        "secure": false,
+        "trustProxy": false,
+        "admin": {
+            "pageSize": 30,
+            "jwtSecret": "jwt_is_cool"
+        },
+        "pathBase": ""
     },
     "discord": {
         "clientId": "CLIENT_ID",

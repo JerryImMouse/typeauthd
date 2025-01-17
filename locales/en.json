@@ -18,5 +18,12 @@
     "ok267": "Tokens updated, but credentials left untouched",
     "ok267_details": "Just do not authorize anymore, you're already authorized.",
 
-    "auth_btn": "Authorize"
+    "auth_btn": "Authorize",
+
+    "login_token_name": "API Token",
+    "login_title": "Login",
+    "login_submit_btn": "Login",
+
+    "panel_title": "Admin Panel",
+    "panel_submit_btn": "Search"
 }

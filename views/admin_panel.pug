@@ -1,0 +1,22 @@
+extends layout.pug 
+
+block header
+    link(rel="stylesheet", href="/css/panel.css")
+
+block content 
+    h2.h2= panel_title
+    form.search-form(action="panel" method='get')
+        input(type="text" name="search" placeholder="discord_id or user_id").input.center-self.search-input
+        input(type="submit" value= panel_submit_btn).button.center.submit-btn
+
+    div(class="records_cont")
+        each record in records
+            .record-card 
+                p.p= "Discord UID: " + record.discord_uid 
+                p.p= "User ID: " + record.uid
+                p.p= "Expires In: " + record.expires 
+                p.p= "Updated At: " + record.updated_at
+    .pages
+        a(href= prev_page).page_link= "<"
+        p.p= cur_page
+        a(href= next_page).page_link= ">" 
