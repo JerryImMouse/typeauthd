@@ -1,4 +1,5 @@
-import express from 'express';
+import express, { Router } from 'express';
+import { Configration } from '../config';
 
 // controllers
 import { AuthController } from "./controllers/auth";
@@ -13,9 +14,14 @@ import cookieParser from 'cookie-parser';
 // erghh...
 export class WebApp {
     private _express: express.Application;
+    private _pathBaseRouter: express.Router;
+    private _config: Configration;
+
 
     constructor() {
+        this._config = Configration.get();
         this._express = http2Express(express);
+        this._pathBaseRouter = Router();
     }
 
     configure(trustProxy: boolean = false) {
@@ -31,11 +37,13 @@ export class WebApp {
     }
 
     controllers() {
-        this._express.use(express.urlencoded({ extended: true }));
-        this._express.use('/', RootController.collectToRouter());
-        this._express.use('/api', ApiController.collectToRouter());
-        this._express.use('/auth', AuthController.collectToRouter());
-        this._express.use('/admin', AdminController.collectToRouter());
+        this._pathBaseRouter.use(express.urlencoded({extended: true}));
+        this._pathBaseRouter.use('/', RootController.collectToRouter());
+        this._pathBaseRouter.use('/api', ApiController.collectToRouter());
+        this._pathBaseRouter.use('/auth', AuthController.collectToRouter());
+        this._pathBaseRouter.use('/admin', AdminController.collectToRouter());
+
+        this._express.use(this._config.pathBase, this._pathBaseRouter);
     }
 
     application() {

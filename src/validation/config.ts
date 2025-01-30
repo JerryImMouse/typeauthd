@@ -17,8 +17,10 @@ export function _validatePathBase(value: ConfigFieldValue) {
     if (typeof value !== 'string')
         return [false, "Value is not a string", undefined];
 
-    if (value.trim() === '' || !value.trim().startsWith("/"))
-        return [false, "Invalid PathBase, PathBase should start with `/`, or be `/` only."];
+    if (value.trim() === '' || 
+       !value.trim().startsWith("/") ||
+       !value.trim().endsWith("/"))
+        return [false, "Invalid PathBase, PathBase should START and END with `/`, or be `/` only."];
 
     return [true, undefined, undefined];
 }

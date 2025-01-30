@@ -1,5 +1,8 @@
 import {Request, Response, Router} from 'express';
 import { WebHelpers } from '../helpers';
+import { Configration } from '../../config';
+
+const config = Configration.get();
 
 export class RootController {
     public static collectToRouter() {
@@ -10,7 +13,8 @@ export class RootController {
     }
 
     public static async getRoot(req: Request, res: Response) {
-        res.redirect('auth/login');
+        const route = `${config.pathBase}auth/login`;
+        res.redirect(route);
     }
 
     public static async getLogs(req: Request, res: Response) {
