@@ -12,7 +12,7 @@
     "typeauthd"
   ],
   "author": "JerryImMouse",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "dependencies": {
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
