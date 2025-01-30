@@ -34,7 +34,7 @@ function logRuntimeInfo(config: Configration) {
 
     logger.info(`Node environment: '${nodeEnv}'`);
     
-    if (nodeEnv === 'development') {
+    if (nodeEnv === 'debug') {
         logger.debug(`${JSON.stringify(config.all, null, 2)}`);
     }
 
