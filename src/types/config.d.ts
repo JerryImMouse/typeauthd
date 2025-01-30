@@ -12,11 +12,19 @@ export interface DatabaseConfiguration {
 export interface AppConfiguration {
     port: number;
     extraEnabled: boolean,
-    jwtSecret: string,
     apiSecret: string,
     logDirPath: string
     https: HttpsConfiguration,
-    locale: string
+    secure: boolean,
+    pathBase: string,
+    trustProxy: boolean,
+    locale: string,
+    admin: AdminConfiguration
+}
+
+export interface AdminConfiguration {
+    pageSize: number,
+    jwtSecret: string,
 }
 
 export interface HttpsConfiguration {

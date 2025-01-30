@@ -1,0 +1,18 @@
+.content {
+    width: 60%;
+}
+
+.input {
+    width: 70%;
+    align-self: center;
+}
+
+@media (min-width: 768px) {
+    .input {
+        width: 100%;
+    }
+
+    .content {
+        width: 20%;
+    }
+}

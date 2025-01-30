@@ -145,6 +145,50 @@ export class PostgresDatabase implements IDatabase {
         }
     }
 
+    public async selectLimitOffsetLike<T>(
+        table: string, 
+        offset: number, 
+        limit: number, 
+        data: Record<string, string | number> | undefined = undefined
+    ): Promise<T[] | null> {
+        let query = `SELECT * FROM ${table}`;
+        const values: any[] = [];
+        let conditionIndex = 1;
+    
+        if (data) {
+            const conditions = Object.entries(data).map(([key, value]) => {
+                if (typeof value === 'string') {
+                    const condition = `${key} LIKE $${conditionIndex++}`;
+                    values.push(`${value}%`);
+                    return condition;
+                } else if (typeof value === 'number') {
+                    const condition = `${key} = $${conditionIndex++}`;
+                    values.push(value);
+                    return condition;
+                }
+                return '';
+            }).filter(Boolean).join(' OR ');
+            
+            if (conditions) {
+                query += ` WHERE ${conditions}`;
+            }
+        }
+    
+        query += ` ORDER BY id LIMIT $${conditionIndex++} OFFSET $${conditionIndex++}`;
+        values.push(limit, offset);
+    
+        try {
+            const result = await this._connection.query(query, values);
+            if (result.rows.length > 0) {
+                return result.rows as T[];
+            }
+            return null;
+        } catch (err) {
+            this._handleError(query, err);
+            return null;
+        }
+    }
+
     public delete(table: string, key: string, value: string | number): Promise<boolean> {
         return this.deleteOr(table, {[key]: value});
     }

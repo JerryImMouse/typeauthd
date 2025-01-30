@@ -1,4 +1,4 @@
-import { eabort, mapErr } from './helpers';
+import { cfgabort, eabort, mapErr } from './helpers';
 
 import path from 'path';
 import fs from 'fs';
@@ -6,6 +6,7 @@ import { ConfigurationData } from './types/config';
 
 const root = path.resolve(__dirname, '..');
 
+// TODO: Do something with this shit, I need to change everything here
 export class Configration {
     private static readonly _configPath = path.resolve(__dirname, '..', 'appconfig.json');
     private static readonly _devConfigPath = path.resolve(__dirname, '..', 'appconfig.dev.json');
@@ -50,57 +51,69 @@ export class Configration {
 
     // little bit messy, but works
     private _validate() {
-        const isString = (value: any): value is string => typeof value === 'string' && value.trim() !== '';
+        const isString = (value: any): value is string => typeof value === 'string';
         const isNumber = (value: any): value is number => typeof value === 'number' && !isNaN(value);
         const isBoolean = (value: any): value is boolean => typeof value === 'boolean';
     
         const db = this._configData.database;
         if (!isString(db.provider)) 
-            eabort('Invalid or missing `database.provider` in configuration.');
+            cfgabort('Invalid or missing `database.provider` in configuration.');
 
         if (!isString(db.connection)) 
-            eabort('Invalid or missing `database.connection` in configuration.');
+            cfgabort('Invalid or missing `database.connection` in configuration.');
     
 
         const app = this._configData.app;
         if (!isNumber(app.port)) 
-            eabort('Invalid or missing `app.port` in configuration.');
+            cfgabort('Invalid or missing `app.port` in configuration.');
 
         if (!isBoolean(app.extraEnabled)) 
-            eabort('Invalid or missing `app.extraEnabled` in configuration.');
-
-        if (!isString(app.jwtSecret)) 
-            eabort('Invalid or missing `app.jwtSecret` in configuration.');
+            cfgabort('Invalid or missing `app.extraEnabled` in configuration.');
 
         if (!isString(app.apiSecret)) 
-            eabort('Invalid or missing `app.apiSecret` in configuration.');
+            cfgabort('Invalid or missing `app.apiSecret` in configuration.');
 
         if (!isString(app.logDirPath))
-            eabort('Invalid or missing `app.logDirPath` in configuration.');
+            cfgabort('Invalid or missing `app.logDirPath` in configuration.');
 
         if (!isString(app.locale))
-            eabort('Invalid or missing `app.locale` in configuration.');
+            cfgabort('Invalid or missing `app.locale` in configuration.');
+
+        if (!isBoolean(app.trustProxy))
+            cfgabort('Invalid or missing `app.trustProxy` in configuration');
+
+        if (!isBoolean(app.secure))
+            eabort('Invalid or missing `app.secure` in configuration');
+
+        if (!isString(app.pathBase))
+            cfgabort('Invalid or missing `app.pathBase` in configuration');
     
         const https = app.https;
         if (!isBoolean(https.useSSL)) 
-            eabort('Invalid or missing `app.https.useSSL` in configuration.');
+            cfgabort('Invalid or missing `app.https.useSSL` in configuration.');
 
         if (!isString(https.keyFile)) 
-            eabort('Invalid or missing `app.https.keyFile` in configuration.');
+            cfgabort('Invalid or missing `app.https.keyFile` in configuration.');
 
         if (!isString(https.certFile)) 
-            eabort('Invalid or missing `app.https.certFile` in configuration.');
+            cfgabort('Invalid or missing `app.https.certFile` in configuration.');
     
+        const admin = app.admin;
+        if (!isString(admin.jwtSecret)) 
+            cfgabort('Invalid or missing `app.admin.jwtSecret` in configuration.');
+
+        if (!isNumber(admin.pageSize))
+            cfgabort('Invalid or missing `app.admin.pageSize` in configuration.');
 
         const discord = this._configData.discord;
         if (!isString(discord.clientId)) 
-            eabort('Invalid or missing `discord.clientId` in configuration.');
+            cfgabort('Invalid or missing `discord.clientId` in configuration.');
 
         if (!isString(discord.clientSecret)) 
-            eabort('Invalid or missing `discord.clientSecret` in configuration.');
+            cfgabort('Invalid or missing `discord.clientSecret` in configuration.');
 
         if (!isString(discord.redirectUri)) 
-            eabort('Invalid or missing `discord.redirectUri` in configuration.');
+            cfgabort('Invalid or missing `discord.redirectUri` in configuration.');
     }
 
     /// Getters
@@ -121,8 +134,16 @@ export class Configration {
         return this._configData.app.extraEnabled;
     }
 
-    public get jwtSecret() {
-        return this._configData.app.jwtSecret;
+    public get adminJwtSecret() {
+        return this._configData.app.admin.jwtSecret;
+    }
+
+    public get adminPageSize() {
+        return this._configData.app.admin.pageSize;
+    }
+
+    public get pathBase() {
+        return this._configData.app.pathBase;
     }
 
     public get apiSecret() {
@@ -135,6 +156,14 @@ export class Configration {
 
     public get locale() {
         return this._configData.app.locale;
+    }
+
+    public get trustProxy() {
+        return this._configData.app.trustProxy;
+    }
+
+    public get secure() {
+        return this._configData.app.secure;
     }
 
     public get httpsUseSSL() {

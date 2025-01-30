@@ -44,6 +44,24 @@ body {
     padding-bottom: 10px;
 }
 
+.form {
+    display: flex;
+    flex-direction: column;
+}
+
+.input {
+    background-color: #1A1D20;
+    color:#DEE2E6;
+    border-width: 0px;
+    border-radius: 5px;
+    outline: 1px solid white;
+    padding: 5px;
+}
+
+.input:hover {
+    background-color: #212529;
+}
+
 .content {
     display: flex;
     flex-direction: column;
