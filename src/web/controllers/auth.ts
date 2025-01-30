@@ -6,6 +6,8 @@ import { LocaleManager } from '../../locale';
 import { LocaleExtendedRequest } from '../../types/web';
 import { getLocale } from '../middlewares/auth';
 import { Configration } from '../../config';
+import { randomUUID } from 'crypto';
+import { validateUuid } from '../../validation/uuid';
 
 // database should be already initialized here
 const db = Database.getDbImpl();
@@ -16,7 +18,6 @@ const config = Configration.get();
 /// getPATH_PATH_... - GET /auth/PATH/PATH/...
 export class AuthController {
     private static _logger = Logger.get();
-
 
     public static collectToRouter() {
         const router = Router();
@@ -33,7 +34,14 @@ export class AuthController {
         const auth_required_details = uid ? locales.loc('auth_required_details_uid', locale) : locales.loc('auth_required_details', locale); 
         const auth_btn = locales.loc('auth_btn', locale);
         
-        res.render('login', {title: "Login", auth_required, auth_required_details, authLink: uid ? WebHelpers.generateAuthLink(uid) : undefined, auth_btn})
+        let authLink: string | undefined;
+        if (uid) {
+            if (validateUuid(uid)) {
+                authLink = WebHelpers.generateAuthLink(uid);
+            }
+        }
+
+        res.render('login', {title: "Login", auth_required, auth_required_details, authLink, auth_btn});
     }
 
     public static async getLogin_Cb(req: LocaleExtendedRequest, res: Response) {
@@ -60,6 +68,7 @@ export class AuthController {
         const identifyScopeData = await WebHelpers.identify(tokenStruct.access_token, req);
         if (!identifyScopeData) {
             const data = {
+                id: randomUUID().toString(),
                 ip: req.ip,
                 http_ver: req.httpVersion,
                 protocol: req.protocol,
@@ -67,18 +76,13 @@ export class AuthController {
 
                 err: "Unable to fetch identify scope",
             }
-            const jsonData = JSON.stringify(data);
-            const dataId = {
-                id: btoa(jsonData),
-                data
-            }
 
             WebHelpers.respondErrWithLogs(
                 res, 
                 'Unable to fetch identify scope', 
                 500, 
                 'You cannot do anything with this, address the issue to developer',
-                btoa(JSON.stringify(dataId)),
+                JSON.stringify(data),
                 locale
             );
             return;
