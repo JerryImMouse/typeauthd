@@ -5,4 +5,6 @@ block content
     p.p.center= errorTitle + " - " + statusCode 
     p.p.center= errorDescription
     if logsLink
+        p.p.center= "Your error ID: " + errorId
         a(href= logsLink style="font-size: 1.1em;").center.button= "Error Logs"
+        

@@ -30,9 +30,18 @@ export class WebHelpers {
         res.status(code).render('error', {title: 'Error', statusCode: code, errorTitle: msg, errorDescription: help, errorText})
     }
 
-    public static respondErrWithLogs(res: ExResponse, msg: string, code: number, help: string, data: string, locale: string | undefined = undefined) {
+    public static respondErrWithLogs(res: ExResponse, msg: string, code: number, help: string, id: string, data: string, locale: string | undefined = undefined) {
         const errorText = locales.loc("error_title", locale ?? config.locale);
-        res.status(code).render('error', {title: "Error", statusCode: code, errorTitle: msg, errorDescription: help, errorText, logsLink: `../logs?b64=${btoa(data)}`})
+        
+        res.status(code).render('error', {
+            title: "Error", 
+            statusCode: code, 
+            errorId: id, 
+            errorTitle: msg, 
+            errorDescription: help, 
+            errorText, 
+            logsLink: `../logs?b64=${btoa(data)}`
+        });
         
         Logger.get().error("500 - Server Error", {err: data});
     }

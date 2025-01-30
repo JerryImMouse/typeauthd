@@ -30,18 +30,39 @@ export class AuthController {
         let uid = req.query['uid']?.toString() ?? undefined;
 
         const locale = req.locale!;
-        const auth_required = locales.loc('auth_required', locale);
-        const auth_required_details = uid ? locales.loc('auth_required_details_uid', locale) : locales.loc('auth_required_details', locale); 
-        const auth_btn = locales.loc('auth_btn', locale);
+        // const auth_required = locales.loc('auth_required', locale);
+        // const auth_required_details = uid ? locales.loc('auth_required_details_uid', locale) : locales.loc('auth_required_details', locale); 
+        // const auth_btn = locales.loc('auth_btn', locale);
         
-        let authLink: string | undefined;
-        if (uid) {
-            if (validateUuid(uid)) {
-                authLink = WebHelpers.generateAuthLink(uid);
-            }
-        }
+        // let authLink: string | undefined;
+        // if (uid) {
+        //     if (validateUuid(uid)) {
+        //         authLink = WebHelpers.generateAuthLink(uid);
+        //     }
+        // }
 
-        res.render('login', {title: "Login", auth_required, auth_required_details, authLink, auth_btn});
+        // res.render('login', {title: "Login", auth_required, auth_required_details, authLink, auth_btn});
+
+        const errId = randomUUID().toString();
+            const data = {
+                id: errId,
+                ip: req.ip,
+                http_ver: req.httpVersion,
+                protocol: req.protocol,
+                url: req.url,
+
+                err: "Unable to fetch identify scope",
+            }
+
+            WebHelpers.respondErrWithLogs(
+                res, 
+                'Unable to fetch identify scope', 
+                500, 
+                'You cannot do anything with this, address the issue to developer',
+                errId,
+                JSON.stringify(data),
+                locale
+            );
     }
 
     public static async getLogin_Cb(req: LocaleExtendedRequest, res: Response) {
@@ -67,8 +88,9 @@ export class AuthController {
 
         const identifyScopeData = await WebHelpers.identify(tokenStruct.access_token, req);
         if (!identifyScopeData) {
+            const errId = randomUUID().toString();
             const data = {
-                id: randomUUID().toString(),
+                id: errId,
                 ip: req.ip,
                 http_ver: req.httpVersion,
                 protocol: req.protocol,
@@ -82,6 +104,7 @@ export class AuthController {
                 'Unable to fetch identify scope', 
                 500, 
                 'You cannot do anything with this, address the issue to developer',
+                errId,
                 JSON.stringify(data),
                 locale
             );
