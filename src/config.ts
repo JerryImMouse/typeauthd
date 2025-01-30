@@ -1,56 +1,75 @@
-import { cfgabort, mapErr } from './helpers';
+import { mapErr } from './helpers';
 
+import { Logger } from './logging';
 import path from 'path';
 import fs from 'fs';
-import { AdminConfiguration, AppConfiguration, ConfigFieldKey, ConfigurationData, DatabaseConfiguration, DiscordConfiguration, HttpsConfiguration } from './types/config';
+import { 
+    _postValidate, 
+    _validatePathBase, 
+    _validateRedirectUri 
+} from './validation/config';
+import { 
+    AdminConfiguration, 
+    AppConfiguration, 
+    ConfigFieldKey, 
+    ConfigurationData, 
+    DatabaseConfiguration, 
+    DiscordConfiguration, 
+    HttpsConfiguration 
+} from './types/config';
+
+import {
+    _validateDatabaseProvider,
+    _validatePort
+} from './validation/config';
 
 // keys from /src/types/config.d.ts, needed to validate configuration
 export const discordConfigurationKeys = [
-    ['clientId', true, undefined],
-    ['clientSecret', true, undefined],
-    ['redirectUri', true, undefined],
+    ['clientId', true, undefined, undefined],
+    ['clientSecret', true, undefined, undefined],
+    ['redirectUri', true, undefined, _validateRedirectUri],
 ] as Array<ConfigFieldKey<DiscordConfiguration>>;
 
 export const httpsConfigurationKeys = [
-    ['useSSL', false, false],
-    ['keyFile', false, ""],
-    ['certFile', false, ""],
+    ['useSSL', false, false, undefined],
+    ['keyFile', false, "", undefined],
+    ['certFile', false, "", undefined],
 ] as Array<ConfigFieldKey<HttpsConfiguration>>;
 
 export const adminConfigurationKeys = [
-    ['pageSize', false, 30],
-    ['jwtSecret', true, undefined],
+    ['pageSize', false, 30, undefined],
+    ['jwtSecret', true, undefined, undefined],
 ] as Array<ConfigFieldKey<AdminConfiguration>>;
 
 export const appConfigurationKeys = [
-    ['port', false, 2424],
-    ['extraEnabled', false, true],
-    ['apiSecret', true, undefined],
-    ['logDirPath', false, './logs/'],
+    ['port', false, 2424, _validatePort],
+    ['extraEnabled', false, true, undefined],
+    ['apiSecret', true, undefined, undefined],
+    ['logDirPath', false, './logs/', undefined],
     ['https', false, {
         'useSSL': false,
         'keyFile': "",
         'certFile': ""
-    }],
-    ['secure', false, false],
-    ['pathBase', false, '/'],
-    ['trustProxy', false, false],
-    ['locale', false, 'en'],
-    ['admin', true, undefined],
+    }, undefined],
+    ['secure', false, false, undefined],
+    ['pathBase', false, '/', _validatePathBase],
+    ['trustProxy', false, false, undefined],
+    ['locale', false, 'en', undefined],
+    ['admin', true, undefined, undefined],
 ] as Array<ConfigFieldKey<AppConfiguration>>;
 
 export const databaseConfigurationKeys = [
-    ['provider', false, 'sqlite'],
-    ['connection', false, 'app.sqlite'],
+    ['provider', false, 'sqlite', _validateDatabaseProvider],
+    ['connection', false, 'app.sqlite', undefined],
 ] as Array<ConfigFieldKey<DatabaseConfiguration>>;
 
 export const configurationDataKeys = [
     ['database', false, {
         'provider': 'sqlite',
         'connection': 'app.sqlite'
-    }],
-    ['app', true, undefined],
-    ['discord', true, undefined]
+    }, undefined],
+    ['app', true, undefined, undefined],
+    ['discord', true, undefined, undefined]
 ] as Array<ConfigFieldKey<ConfigurationData>>;
 
 
@@ -63,9 +82,11 @@ export class Configration {
     private static _instance: Configration;
     
     private _configData!: ConfigurationData; // we are exiting on configuration fail, so ! is ok here, i think
+    private _logger!: Logger;
 
     private constructor() {
         let configPath = Configration._configPath;
+        this._logger = Logger.getLiteLogger();
 
         // if there is a dev config and we are not in production environment, use it!
         if (process.env.NODE_ENV != 'production' && fs.existsSync(Configration._devConfigPath)) {
@@ -75,14 +96,14 @@ export class Configration {
         try {
             const data = fs.readFileSync(configPath, {encoding: 'utf-8'});
             this._configData = JSON.parse(data);
-            this._validate();
             this._adjustPaths();
             this._ensurePaths();
+            this._validate();
         } catch (err) {
             if (err instanceof Error) 
-                cfgabort(`Error during configuration setup. Error: ${JSON.stringify(mapErr(err))}`);
+                this._logger.error(`Error during configuration setup.`, mapErr(err));
 
-            cfgabort('Unknown error occured during configuration setup.');
+            this._logger.error('Unknown error occured during configuration setup.');
         }
     }
 
@@ -105,8 +126,8 @@ export class Configration {
 
         const validateSection = <T>(section: T, sectionName: string, keys: ConfigFieldKey<T>[]) => {
             if (typeof section !== 'object') {
-                cfgabort("Invalid usage of validateSection() method.");
-                return;
+                this._logger.error("Invalid usage of validateSection() method.", {sectionName});
+                process.exit(1);
             }
             
             if (!section) {
@@ -114,8 +135,19 @@ export class Configration {
                 return;
             }
 
-            keys.forEach(([key, required, defaultValue]) => {
-                if (!(key in section)) {
+            keys.forEach(([key, required, defaultValue, validateFunction]) => {
+                if (key in section && validateFunction) {
+                    const validationResult = validateFunction((section as any)[key]);
+
+                    if (!validationResult[0]) {
+                        this._logger.error(`Validation failed for ${sectionName}.${String(key)}.`,{ error: validationResult[1] });
+                        process.exit(1);
+                    }
+
+                    if (validationResult[2])
+                        this._logger.warn(`Validation warn for ${sectionName}.${String(key)}.`, {warn: validationResult[2]});
+
+                } else if (!(key in section)) {
                     if (required) {
                         missingFields.push(`Missing required field in ${sectionName}: ${String(key)}`);
                     } else {
@@ -145,13 +177,34 @@ export class Configration {
         validateSection(this._configData, 'root', configurationDataKeys);
 
         if (missingFields.length > 0) {
-            cfgabort(`Invalid configuration:\n${missingFields.join('\n')}`);
+            const err = missingFields.join('\n');
+            this._logger.error(`Invalid configuration.`, {missingFields: err});
+            process.exit(1);
         }
+
+        const results = _postValidate(this._configData)
+        let anyFailed = false;
+        results.forEach((result) => {
+            if (!result[0]) {
+                this._logger.error(`Post validation failed: ${result[1]}`);
+                anyFailed = true;
+            }
+
+            if (result[2])
+                this._logger.warn(`Post validation warning: ${result[2]}`);
+        });
+
+        if (anyFailed)
+            process.exit(1);
     }
 
     // #endregion
 
     // #region Getters
+
+    public get all() {
+        return this._configData;
+    }
 
     public get port() {
         return this._configData.app.port;

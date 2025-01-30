@@ -34,8 +34,8 @@ function logRuntimeInfo(config: Configration) {
 
     logger.info(`Node environment: '${nodeEnv}'`);
     
-    if (nodeEnv !== 'production') {
-        logger.debug(`${JSON.stringify(config, null, 2)}`);
+    if (nodeEnv === 'development') {
+        logger.debug(`${JSON.stringify(config.all, null, 2)}`);
     }
 
     logger.info(`Database provider in use: '${dbProvider}'`);
