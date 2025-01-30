@@ -56,6 +56,7 @@ export const appConfigurationKeys = [
     ['trustProxy', false, false, undefined],
     ['locale', false, 'en', undefined],
     ['admin', true, undefined, undefined],
+    ['uuidRegExp', false, ".*", undefined]
 ] as Array<ConfigFieldKey<AppConfiguration>>;
 
 export const databaseConfigurationKeys = [
@@ -208,6 +209,10 @@ export class Configration {
 
     public get port() {
         return this._configData.app.port;
+    }
+
+    public get uuidRegExp() {
+        return this._configData.app.uuidRegExp;
     }
 
     public get databaseProvider() {

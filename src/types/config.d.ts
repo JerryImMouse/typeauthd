@@ -19,7 +19,8 @@ export interface AppConfiguration {
     pathBase: string,
     trustProxy: boolean,
     locale: string,
-    admin: AdminConfiguration
+    admin: AdminConfiguration,
+    uuidRegExp: string,
 }
 
 export interface AdminConfiguration {

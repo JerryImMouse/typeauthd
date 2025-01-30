@@ -1,7 +1,8 @@
 import { Response, NextFunction } from "express";
-import { WebHelpers } from "../helpers";
+import { SearchMethod, WebHelpers } from "../helpers";
 import { RecordExtendedRequest } from "../../types/web";
 import { Database } from "../../database/generic";
+import { validateUuid } from "../../validation/uuid";
 
 const db = Database.getDbImpl();
 
@@ -10,6 +11,13 @@ export async function findRecordByQuery(req: RecordExtendedRequest, res: Respons
     if (!query) {
         res.status(400).send({error: 'Bad Request'});
         return;
+    }
+
+    if (query.method === SearchMethod.UID) {
+        if (!validateUuid(query.id)) {
+            res.status(400).json({error: 'Invalid ID pattern.'});
+            return;
+        }
     }
 
     let record = await WebHelpers.fetchRecordByMethod(db, query.id, query.method);
@@ -30,6 +38,13 @@ export async function findRecordByBody(req: RecordExtendedRequest, res: Response
         if (typeof body.id !== 'string' || typeof body.method !== 'string') {
             res.status(400).json({ error: 'Invalid form data' });
             return;
+        }
+
+        if (body.method === SearchMethod.UID) {
+            if (!validateUuid(body.id)) {
+                res.status(400).json({error: 'Invalid ID pattern.'});
+                return;
+            }
         }
 
         const record = await WebHelpers.fetchRecordByMethod(db, body.id, body.method);
