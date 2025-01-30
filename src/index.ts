@@ -33,6 +33,11 @@ function logRuntimeInfo(config: Configration) {
     const nativeSSL = config.httpsUseSSL;
 
     logger.info(`Node environment: '${nodeEnv}'`);
+    
+    if (nodeEnv === 'debug') {
+        logger.debug(`${JSON.stringify(config.all, null, 2)}`);
+    }
+
     logger.info(`Database provider in use: '${dbProvider}'`);
     logger.info(`NativeSSL: ${nativeSSL}`);
     logger.info(`Running port: ${config.port}`);

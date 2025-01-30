@@ -1,4 +1,4 @@
-import winston, {format} from "winston";
+import winston, {format, level} from "winston";
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { Configration } from "./config";
 
@@ -14,6 +14,7 @@ export enum LogLevel {
 
 export class Logger {
     private static _instance?: Logger;
+    private static _liteInstance?: Logger;
     private static _name = 'typeauthd';
 
     private readonly _logger: winston.Logger;
@@ -21,13 +22,13 @@ export class Logger {
     
     public static get() {
         if (!Logger._instance) {
-            Logger._instance = new Logger();
+            Logger._instance = new Logger(this._initWinston());
         }
         
         return Logger._instance!;
     }
 
-    private _initWinston() {
+    private static _initWinston() {
         const logger = winston.createLogger({
             transports: Logger._getTransports()
         });
@@ -39,7 +40,8 @@ export class Logger {
 
         const transports: Array<any> = [
             new winston.transports.Console({
-              format: this._getConsole(),
+                format: this._getConsole(),
+                level: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBG
             }),
         ];
         
@@ -82,8 +84,8 @@ export class Logger {
         });
       }
 
-    private constructor() {
-        this._logger = this._initWinston();
+    private constructor(winston: winston.Logger) {
+        this._logger = winston;
     }
     
     public debug(msg: LogMsg, context?: LogCtx) {
@@ -105,4 +107,25 @@ export class Logger {
     private _log(msg: LogMsg, level: LogLevel, context?: LogCtx) {
         this._logger.log(level, msg, {context: context});
     }
+
+    // #region LiteLogging
+
+    // I had to have this because of circular dependency with Configuration
+    // This one doesn't log anything into files, neither there is a prod env, or dev.
+    public static getLiteLogger() {
+        if (!this._liteInstance) {
+            this._liteInstance = new Logger(winston.createLogger({
+                transports: [
+                    new winston.transports.Console({
+                        format: this._getConsole(),
+                        level: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBG
+                    }),
+                ]
+            }));
+        }
+
+        return this._liteInstance;
+    }
+
+    // #endregion
 }

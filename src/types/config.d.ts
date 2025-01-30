@@ -38,3 +38,12 @@ export interface DiscordConfiguration {
     clientSecret: string,
     redirectUri: string
 }
+
+export type ConfigFieldValue = string | number | boolean;
+
+// (valid, err_val, optional_warn)
+export type ConfigValidateFunctionResult = [boolean, string | undefined, string | undefined];
+export type ConfigValidateFunction = (value: ConfigFieldValue) => ConfigValidateFunctionResult
+
+// (section_key, required, default_value?, specific_validate_func)
+export type ConfigFieldKey<T> = [keyof T, boolean, ConfigFieldValue | undefined, ConfigValidateFunction | undefined];

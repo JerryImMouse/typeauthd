@@ -81,7 +81,7 @@ export class PostgresDatabase implements IDatabase {
             return true;
         } catch (err) {
             if (err instanceof Error) {
-                this._logger.warn("Error occured during Postgres init method.", mapErr(err));
+                this._logger.error("Error occured during Postgres init method.", mapErr(err));
             }
             return false;
         }
