@@ -1,4 +1,4 @@
-import winston, {format} from "winston";
+import winston, {format, level} from "winston";
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { Configration } from "./config";
 
@@ -39,7 +39,8 @@ export class Logger {
 
         const transports: Array<any> = [
             new winston.transports.Console({
-              format: this._getConsole(),
+                format: this._getConsole(),
+                level: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBG
             }),
         ];
         

@@ -1,12 +1,61 @@
-import { cfgabort, eabort, mapErr } from './helpers';
+import { cfgabort, mapErr } from './helpers';
 
 import path from 'path';
 import fs from 'fs';
-import { ConfigurationData } from './types/config';
+import { AdminConfiguration, AppConfiguration, ConfigFieldKey, ConfigurationData, DatabaseConfiguration, DiscordConfiguration, HttpsConfiguration } from './types/config';
+
+// keys from /src/types/config.d.ts, needed to validate configuration
+export const discordConfigurationKeys = [
+    ['clientId', true, undefined],
+    ['clientSecret', true, undefined],
+    ['redirectUri', true, undefined],
+] as Array<ConfigFieldKey<DiscordConfiguration>>;
+
+export const httpsConfigurationKeys = [
+    ['useSSL', false, false],
+    ['keyFile', false, ""],
+    ['certFile', false, ""],
+] as Array<ConfigFieldKey<HttpsConfiguration>>;
+
+export const adminConfigurationKeys = [
+    ['pageSize', false, 30],
+    ['jwtSecret', true, undefined],
+] as Array<ConfigFieldKey<AdminConfiguration>>;
+
+export const appConfigurationKeys = [
+    ['port', false, 2424],
+    ['extraEnabled', false, true],
+    ['apiSecret', true, undefined],
+    ['logDirPath', false, './logs/'],
+    ['https', false, {
+        'useSSL': false,
+        'keyFile': "",
+        'certFile': ""
+    }],
+    ['secure', false, false],
+    ['pathBase', false, '/'],
+    ['trustProxy', false, false],
+    ['locale', false, 'en'],
+    ['admin', true, undefined],
+] as Array<ConfigFieldKey<AppConfiguration>>;
+
+export const databaseConfigurationKeys = [
+    ['provider', false, 'sqlite'],
+    ['connection', false, 'app.sqlite'],
+] as Array<ConfigFieldKey<DatabaseConfiguration>>;
+
+export const configurationDataKeys = [
+    ['database', false, {
+        'provider': 'sqlite',
+        'connection': 'app.sqlite'
+    }],
+    ['app', true, undefined],
+    ['discord', true, undefined]
+] as Array<ConfigFieldKey<ConfigurationData>>;
+
 
 const root = path.resolve(__dirname, '..');
 
-// TODO: Do something with this shit, I need to change everything here
 export class Configration {
     private static readonly _configPath = path.resolve(__dirname, '..', 'appconfig.json');
     private static readonly _devConfigPath = path.resolve(__dirname, '..', 'appconfig.dev.json');
@@ -31,11 +80,13 @@ export class Configration {
             this._ensurePaths();
         } catch (err) {
             if (err instanceof Error) 
-                eabort('Error during configuration setup.', mapErr(err));
+                cfgabort(`Error during configuration setup. Error: ${JSON.stringify(mapErr(err))}`);
 
-            eabort('Unknown error occured during configuration setup.');
+            cfgabort('Unknown error occured during configuration setup.');
         }
     }
+
+    // #region HelperMethods
 
     private _adjustPaths() {
         this._configData.app.https.keyFile = path.normalize(path.resolve(root, this.httpsKeyFile));
@@ -49,74 +100,58 @@ export class Configration {
         fs.mkdirSync(this.logDirPath, {recursive: true});
     }
 
-    // little bit messy, but works
     private _validate() {
-        const isString = (value: any): value is string => typeof value === 'string';
-        const isNumber = (value: any): value is number => typeof value === 'number' && !isNaN(value);
-        const isBoolean = (value: any): value is boolean => typeof value === 'boolean';
-    
-        const db = this._configData.database;
-        if (!isString(db.provider)) 
-            cfgabort('Invalid or missing `database.provider` in configuration.');
+        const missingFields: string[] = [];
 
-        if (!isString(db.connection)) 
-            cfgabort('Invalid or missing `database.connection` in configuration.');
-    
+        const validateSection = <T>(section: T, sectionName: string, keys: ConfigFieldKey<T>[]) => {
+            if (typeof section !== 'object') {
+                cfgabort("Invalid usage of validateSection() method.");
+                return;
+            }
+            
+            if (!section) {
+                missingFields.push(`Missing section: ${sectionName}`);
+                return;
+            }
 
-        const app = this._configData.app;
-        if (!isNumber(app.port)) 
-            cfgabort('Invalid or missing `app.port` in configuration.');
+            keys.forEach(([key, required, defaultValue]) => {
+                if (!(key in section)) {
+                    if (required) {
+                        missingFields.push(`Missing required field in ${sectionName}: ${String(key)}`);
+                    } else {
+                        (section as any)[key] = defaultValue;
+                    }
+                }
+            });
+        };
 
-        if (!isBoolean(app.extraEnabled)) 
-            cfgabort('Invalid or missing `app.extraEnabled` in configuration.');
+        if (this._configData.database)
+            validateSection(this._configData.database, 'database', databaseConfigurationKeys);
 
-        if (!isString(app.apiSecret)) 
-            cfgabort('Invalid or missing `app.apiSecret` in configuration.');
+        if (this._configData.app)
+            validateSection(this._configData.app, 'app', appConfigurationKeys);
 
-        if (!isString(app.logDirPath))
-            cfgabort('Invalid or missing `app.logDirPath` in configuration.');
+        if (this._configData.discord)
+            validateSection(this._configData.discord, 'discord', discordConfigurationKeys);
+        
+        if (this._configData.app.https) {
+            validateSection(this._configData.app.https, 'https', httpsConfigurationKeys);
+        }
+        
+        if (this._configData.app.admin) {
+            validateSection(this._configData.app.admin, 'admin', adminConfigurationKeys);
+        }
 
-        if (!isString(app.locale))
-            cfgabort('Invalid or missing `app.locale` in configuration.');
+        validateSection(this._configData, 'root', configurationDataKeys);
 
-        if (!isBoolean(app.trustProxy))
-            cfgabort('Invalid or missing `app.trustProxy` in configuration');
-
-        if (!isBoolean(app.secure))
-            eabort('Invalid or missing `app.secure` in configuration');
-
-        if (!isString(app.pathBase))
-            cfgabort('Invalid or missing `app.pathBase` in configuration');
-    
-        const https = app.https;
-        if (!isBoolean(https.useSSL)) 
-            cfgabort('Invalid or missing `app.https.useSSL` in configuration.');
-
-        if (!isString(https.keyFile)) 
-            cfgabort('Invalid or missing `app.https.keyFile` in configuration.');
-
-        if (!isString(https.certFile)) 
-            cfgabort('Invalid or missing `app.https.certFile` in configuration.');
-    
-        const admin = app.admin;
-        if (!isString(admin.jwtSecret)) 
-            cfgabort('Invalid or missing `app.admin.jwtSecret` in configuration.');
-
-        if (!isNumber(admin.pageSize))
-            cfgabort('Invalid or missing `app.admin.pageSize` in configuration.');
-
-        const discord = this._configData.discord;
-        if (!isString(discord.clientId)) 
-            cfgabort('Invalid or missing `discord.clientId` in configuration.');
-
-        if (!isString(discord.clientSecret)) 
-            cfgabort('Invalid or missing `discord.clientSecret` in configuration.');
-
-        if (!isString(discord.redirectUri)) 
-            cfgabort('Invalid or missing `discord.redirectUri` in configuration.');
+        if (missingFields.length > 0) {
+            cfgabort(`Invalid configuration:\n${missingFields.join('\n')}`);
+        }
     }
 
-    /// Getters
+    // #endregion
+
+    // #region Getters
 
     public get port() {
         return this._configData.app.port;
@@ -189,6 +224,8 @@ export class Configration {
     public get discordRedirectUri() {
         return this._configData.discord.redirectUri;
     }
+
+    // #endregion
 
     /// Singleton implementation
     

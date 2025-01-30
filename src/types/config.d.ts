@@ -38,3 +38,5 @@ export interface DiscordConfiguration {
     clientSecret: string,
     redirectUri: string
 }
+
+export type ConfigFieldKey<T> = [keyof T, boolean, string | number | boolean | undefined];
