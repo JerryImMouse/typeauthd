@@ -1,5 +1,6 @@
-# node modules source
+# Node
 node_modules
+package-lock.json
 
 # any sqlite database
 *.sqlite
