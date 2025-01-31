@@ -1,5 +1,4 @@
 {
-    "$schema": "https://lnav.org/schemas/format-v1.schema.json",
     "typeauthd_log": {
         "title": "TypeAuthd Log",
         "description": "Log entries from the TypeAuthd application",
@@ -30,11 +29,6 @@
                 "kind": "string"
             }
         },
-        "sample": [
-            {
-                "line": "{\"app\":\"typeauthd\",\"level\":\"info\",\"message\":\"Server started at 2424\",\"timestamp\":\"2024-11-27T17:40:21.177Z\"}"
-            }
-        ],
         "line-format": [
             "[",
             {
