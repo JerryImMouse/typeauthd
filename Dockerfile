@@ -1,17 +1,14 @@
-FROM node:18-alpine AS build
+FROM node:18-alpine AS build  
+WORKDIR /app  
 
-WORKDIR /typeauthd
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
+COPY . .  
 
-FROM node:18-slim
+RUN npm install  
+RUN npm run build  
 
-COPY --from=build /app/dist /app/dist
-COPY package*.json ./
-RUN npm install --only=production
+FROM node:18-slim  
+WORKDIR /app  
 
-# EXPOSE 3000 # Will be done later
+COPY --from=build /app /app  
 
 CMD ["node", "dist/index.js"]
