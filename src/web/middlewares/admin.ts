@@ -11,7 +11,7 @@ const logger = Logger.get();
 export function verifyJWT(req: Request, res: Response, next: NextFunction) {
     const jwtToken = req.cookies?.['typeauthd_jwt'];
     if (!jwtToken) {
-        res.redirect(config.pathBase + 'login');
+        res.redirect(`${config.pathBase}admin/login`);
         return;
     }
 

@@ -95,6 +95,6 @@ export class AdminController {
             sameSite: 'strict'
         });
 
-        res.redirect(`${config.pathBase}/admin/panel`);
+        res.redirect(`${config.pathBase}admin/panel`);
     }
 }
