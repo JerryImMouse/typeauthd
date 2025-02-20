@@ -31,7 +31,9 @@ function logRuntimeInfo(config: Configration) {
     const nodeEnv = process.env.NODE_ENV || "Not Set";
     const dbProvider = config.databaseProvider;
     const nativeSSL = config.httpsUseSSL;
+    const logLevel = config.logLevel;
 
+    console.log("\n"); // to separate different launches
     logger.info(`Node environment: '${nodeEnv}'`);
     
     if (nodeEnv === 'debug') {
@@ -41,5 +43,6 @@ function logRuntimeInfo(config: Configration) {
     logger.info(`Database provider in use: '${dbProvider}'`);
     logger.info(`NativeSSL: ${nativeSSL}`);
     logger.info(`Running port: ${config.port}`);
-    logger.info(`Locale in use: '${locales.locale}'`)
+    logger.info(`Locale in use: '${locales.locale}'`);
+    logger.info(`Log Level: ${logLevel}`);
 }

@@ -9,11 +9,13 @@ import { AuthorizedRecord, Database } from '../../database/generic';
 import { LocaleExtendedRequest } from '../../types/web';
 import { verifyJWT } from '../middlewares/admin';
 import { IAuthorizedRecord } from '../../types/database';
+import { Logger } from '../../logging';
 
 const config = Configration.get();
 const locales = LocaleManager.get();
 const db = Database.getDbImpl();
 
+const logger = Logger.get();
 
 export class AdminController {
     public static collectToRouter() {
@@ -80,6 +82,7 @@ export class AdminController {
         await record.extra?.delete()
         await record.delete();
         res.redirect(`${config.pathBase}admin/panel`);
+        logger.debug(`Deleted record with discord_id: ${discord_uid} via admin panel.`);
     }
 
     public static async getLogin(req: LocaleExtendedRequest, res: Response) {

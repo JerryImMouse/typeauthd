@@ -1,3 +1,4 @@
+import { LogLevel } from "../logging";
 import { AppConfiguration, ConfigFieldValue, ConfigurationData, ConfigValidateFunctionResult, DatabaseConfiguration, HttpsConfiguration } from "../types/config";
 import fs from 'node:fs';
 
@@ -48,6 +49,23 @@ export function _validatePort(value: ConfigFieldValue) {
     if (value <= 1023)
         return [true, undefined, 'Specified port is often used by OS or other important network applications. Make sure this port aren\'t taken.'];
     
+    return [true, undefined];
+}
+
+export function _validateLogLevel(value: ConfigFieldValue) {
+    if (typeof value !== 'string')
+        return [false, "Value is not a string"];
+
+    switch (value) {
+        case "debug":
+        case "info":
+        case "warn":
+        case "error":
+            break;
+        default:
+            return [false, `Invalid log level specified: ${value}. Allowed: debug, info, warn, error`];
+    }
+
     return [true, undefined];
 }
 

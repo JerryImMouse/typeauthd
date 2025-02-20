@@ -10,6 +10,7 @@ import { AdminController } from './controllers/admin';
 import path from "path";
 import http2Express from "http2-express-bridge";
 import cookieParser from 'cookie-parser';
+import { logRequest } from './middlewares/base';
 
 // erghh...
 export class WebApp {
@@ -34,6 +35,7 @@ export class WebApp {
         this._express.use(cookieParser());
         this._express.use(express.urlencoded({extended: true}));
         this._express.use(this._config.pathBase, express.static(path.resolve(__dirname, '..', '..', 'assets')));
+        this._express.use(logRequest);
     }
 
     controllers() {

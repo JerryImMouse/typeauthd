@@ -21,7 +21,8 @@
             "jwtSecret": "jwt_is_cool"
         },
         "pathBase": "/",
-        "uuidRegExp": "^[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}$"
+        "uuidRegExp": "^[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}$",
+        "logLevel": "info"
     },
     "discord": {
         "clientId": "CLIENT_ID",

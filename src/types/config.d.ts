@@ -21,6 +21,7 @@ export interface AppConfiguration {
     locale: string,
     admin: AdminConfiguration,
     uuidRegExp: string,
+    logLevel: string,
 }
 
 export interface AdminConfiguration {

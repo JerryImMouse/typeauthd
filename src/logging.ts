@@ -41,7 +41,7 @@ export class Logger {
         const transports: Array<any> = [
             new winston.transports.Console({
                 format: this._getConsole(),
-                level: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBG
+                level: config.logLevel,
             }),
         ];
         

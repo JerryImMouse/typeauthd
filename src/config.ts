@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { 
     _postValidate, 
+    _validateLogLevel, 
     _validatePathBase, 
     _validateRedirectUri 
 } from './validation/config';
@@ -56,7 +57,8 @@ export const appConfigurationKeys = [
     ['trustProxy', false, false, undefined],
     ['locale', false, 'en', undefined],
     ['admin', true, undefined, undefined],
-    ['uuidRegExp', false, ".*", undefined]
+    ['uuidRegExp', false, ".*", undefined],
+    ['logLevel', false, "info", _validateLogLevel],
 ] as Array<ConfigFieldKey<AppConfiguration>>;
 
 export const databaseConfigurationKeys = [
@@ -213,6 +215,10 @@ export class Configration {
 
     public get uuidRegExp() {
         return this._configData.app.uuidRegExp;
+    }
+
+    public get logLevel() {
+        return this._configData.app.logLevel;
     }
 
     public get databaseProvider() {

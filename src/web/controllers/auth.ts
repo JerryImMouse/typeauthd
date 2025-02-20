@@ -13,6 +13,7 @@ import { validateUuid } from '../../validation/uuid';
 const db = Database.getDbImpl();
 const locales = LocaleManager.get();
 const config = Configration.get();
+const logger = Logger.get();
 
 /// Here is the format
 /// getPATH_PATH_... - GET /auth/PATH/PATH/...
@@ -151,6 +152,11 @@ export class AuthController {
             auth_success, 
             auth_success_details, 
             assetPrefix: config.pathBase}
-        )
+        );
+
+        logger.debug(`Successfully authenticated new record`, {
+            discord_uid: identifyScopeData.id,
+            user_id: decodedState,
+        });
     }
 }
