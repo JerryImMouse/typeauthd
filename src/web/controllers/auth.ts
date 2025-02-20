@@ -41,7 +41,13 @@ export class AuthController {
             }
         }
 
-        res.render('login', {title: "Login", auth_required, auth_required_details, authLink, auth_btn});
+        res.render('login', {
+            title: "Login", 
+            auth_required, 
+            auth_required_details, 
+            authLink, auth_btn, 
+            assetPrefix: config.pathBase}
+        );
     }
 
     public static async getLogin_Cb(req: LocaleExtendedRequest, res: Response) {
@@ -112,7 +118,14 @@ export class AuthController {
         }
 
         const decodedState = atob(query.state);
-        const record = await AuthorizedRecord.create(db, decodedState, identifyScopeData.id, tokenStruct.access_token, tokenStruct.refresh_token, tokenStruct.expires_in);
+        const record = await AuthorizedRecord.create(
+            db, 
+            decodedState, 
+            identifyScopeData.id, 
+            tokenStruct.access_token, 
+            tokenStruct.refresh_token, 
+            tokenStruct.expires_in
+        );
         
         // first save call to fill id field, required for ensureExtra()
         await record.save();
@@ -133,6 +146,11 @@ export class AuthController {
         const auth_success = locales.loc('auth_success', locale);
         const auth_success_details = locales.loc('auth_success_details', locale);
 
-        res.render('success', {title: "Success", auth_success, auth_success_details})
+        res.render('success', {
+            title: "Success", 
+            auth_success, 
+            auth_success_details, 
+            assetPrefix: config.pathBase}
+        )
     }
 }

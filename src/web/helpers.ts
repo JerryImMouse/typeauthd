@@ -27,7 +27,14 @@ export class WebHelpers {
     public static respondErr(res: ExResponse, msg: string, code: number, help: string, locale: string | undefined = undefined) {
         const errorText = locales.loc("error_title", locale ?? config.locale);
 
-        res.status(code).render('error', {title: 'Error', statusCode: code, errorTitle: msg, errorDescription: help, errorText})
+        res.status(code).render('error', {
+            title: 'Error', 
+            statusCode: code, 
+            errorTitle: msg, 
+            errorDescription: help, 
+            errorText, 
+            assetPrefix: config.pathBase}
+        );
     }
 
     public static respondErrWithLogs(res: ExResponse, msg: string, code: number, help: string, id: string, data: string, locale: string | undefined = undefined) {
@@ -40,7 +47,8 @@ export class WebHelpers {
             errorTitle: msg, 
             errorDescription: help, 
             errorText, 
-            logsLink: `${config.pathBase}logs?b64=${btoa(data)}`
+            logsLink: `${config.pathBase}logs?b64=${btoa(data)}`,
+            assetPrefix: config.pathBase
         });
         
         Logger.get().error("500 - Server Error", {err: data});

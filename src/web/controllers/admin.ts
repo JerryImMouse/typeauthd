@@ -52,7 +52,8 @@ export class AdminController {
             panel_submit_btn,
             next_page: nextPageLink,
             prev_page: prevPageLink,
-            cur_page: page
+            cur_page: page,
+            assetPrefix: config.pathBase
         });
     }
 
@@ -66,7 +67,8 @@ export class AdminController {
         res.render('admin_login', {
             login_title,
             login_token_name,
-            login_submit_btn
+            login_submit_btn,
+            assetPrefix: config.pathBase
         });
     }
 

@@ -2,9 +2,17 @@ doctype html
 html 
     head 
         title= 'TypeAuthd | ' + title
-        link(rel='stylesheet' href='/css/style.css')
+        link(rel='stylesheet' href= assetPrefix + 'css/style.css')
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         meta(charset="UTF-8")
+        //- Had to do this because of pathBase
+        style.
+            @font-face {
+                font-family: 'JetBrains Mono';
+                src: url('#{assetPrefix}/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+                font-weight: normal;
+                font-style: normal;
+            }
         block header
     body
         h1.h1.title= "TypeAuthD" 
