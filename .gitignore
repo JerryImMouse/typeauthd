@@ -19,5 +19,5 @@ cert
 #ignore production logs
 logs
 
-# ignore hidden files
-.*
+# ignore venv
+.venv
