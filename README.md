@@ -32,6 +32,21 @@ Now you can use **Postman**, **Bruno** or some other application to test your ne
 
 **For more info try to check [Project Wiki](https://github.com/JerryImMouse/typeauthd/wiki)**
 
+## Quickstart with Docker
+Create discord application at [Discord Developer Portal](), copy **CLIENT_ID** and **CLIENT_SECRET** at OAuth2 page.  
+
+Create appconfig.json file somewhere at host, and configure it following the [Project Wiki](https://github.com/JerryImMouse/typeauthd/wiki)**
+
+Start container with
+```bash
+docker run -d \
+  --name "typeauthd" \
+  -p 127.0.0.1:6000:2424 \
+  -e NODE_ENV=production \
+  -v /path/to/appconfig.json:/app/appconfig.json \
+  ghcr.io/jerryimmouse/typeauthd:latest
+```
+
 ## Documentation
 The whole available documentation is listed at **[Project Wiki](https://github.com/JerryImMouse/typeauthd/wiki)** page.
 
