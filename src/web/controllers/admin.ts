@@ -22,6 +22,7 @@ export class AdminController {
         router.get('/login', getLocale, this.getLogin);
         router.post('/login', this.postLogin);
         router.get('/panel', [verifyJWT, getLocale], this.getPanel);
+        router.post('/panel/delete', [verifyJWT], this.postDelete);
 
         return router;
     }
@@ -40,21 +41,45 @@ export class AdminController {
         } : undefined);
 
         const nextPageLink = `${config.pathBase}/admin/panel?search=${searchText}&page=${page+1}&loc=${locale ?? config.locale}`;
-        const prevPageLink = `${config.pathBase}/admin/panel?search=${searchText}&page=${page-1 < 1 ? 1 : page-1}&loc${locale ?? config.locale}`;
+        const prevPageLink = `${config.pathBase}/admin/panel?search=${searchText}&page=${page-1 < 1 ? 1 : page-1}&loc=${locale ?? config.locale}`;
 
         const panel_title = locales.loc('panel_title', locale);
         const panel_submit_btn = locales.loc('panel_submit_btn', locale);
+        const panel_delete_btn = locales.loc('panel_delete_btn', locale);
 
         res.render('admin_panel', {
             records,
             title: "Admin",
             panel_title,
             panel_submit_btn,
+            panel_delete_btn,
             next_page: nextPageLink,
             prev_page: prevPageLink,
             cur_page: page,
             assetPrefix: config.pathBase
         });
+    }
+
+    public static async postDelete(req: Request, res: Response) {
+        const discord_uid = (req.query['discord_uid'] as string) || null;
+        if (!discord_uid) {
+            res.redirect(`${config.pathBase}admin/panel`);
+            return;
+        }
+
+        const record = await AuthorizedRecord.find(db, {discord_uid: discord_uid}, true);
+        if (!record) {
+            res.redirect(`${config.pathBase}admin/panel`);
+            return;
+        }
+
+        if (!record.extra) {
+            await record.ensureExtra()
+        }
+
+        await record.extra?.delete()
+        await record.delete();
+        res.redirect(`${config.pathBase}admin/panel`);
     }
 
     public static async getLogin(req: LocaleExtendedRequest, res: Response) {

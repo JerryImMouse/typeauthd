@@ -25,5 +25,6 @@
     "login_submit_btn": "Login",
 
     "panel_title": "Admin Panel",
-    "panel_submit_btn": "Search"
+    "panel_submit_btn": "Search",
+    "panel_delete_btn": "Delete"
 }

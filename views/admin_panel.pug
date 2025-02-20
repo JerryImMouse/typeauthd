@@ -16,6 +16,8 @@ block content
                 p.p= "User ID: " + record.uid
                 p.p= "Expires In: " + record.expires 
                 p.p= "Updated At: " + record.updated_at
+                form(action="panel/delete?discord_uid=" + record.discord_uid method='post')
+                    input(type="submit" value= panel_delete_btn).button.control-btn
     .pages
         a(href= prev_page).page_link= "<"
         p.p= cur_page

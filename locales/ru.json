@@ -25,5 +25,6 @@
     "login_submit_btn": "Войти",
 
     "panel_title": "Админ Панель",
-    "panel_submit_btn": "Искать"
+    "panel_submit_btn": "Искать",
+    "panel_delete_btn": "Удалить"
 }
