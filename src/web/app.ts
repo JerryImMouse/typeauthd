@@ -37,10 +37,11 @@ export class WebApp {
         
         this._express.use(express.urlencoded({extended: true}));
         this._express.use(express.json());
-        this._express.use(bodyParserErrorHandler());
-
+        
         this._express.use(this._config.pathBase, express.static(path.resolve(__dirname, '..', '..', 'assets')));
         this._express.use(logRequest);
+        
+        this._express.use(bodyParserErrorHandler());
     }
 
     controllers() {
