@@ -28,7 +28,11 @@ export class AuthController {
     }
 
     public static async getLogin(req: LocaleExtendedRequest, res: Response) {
-        let uid = req.query['uid']?.toString() ?? undefined;
+        let uid: string | undefined = req.query['uid']?.toString() ?? "";
+        
+        if (!validateUuid(uid))
+            uid = undefined;
+        
 
         const locale = req.locale!;
         const auth_required = locales.loc('auth_required', locale);
@@ -36,11 +40,9 @@ export class AuthController {
         const auth_btn = locales.loc('auth_btn', locale);
         
         let authLink: string | undefined;
-        if (uid) {
-            if (validateUuid(uid)) {
-                authLink = WebHelpers.generateAuthLink(uid);
-            }
-        }
+        if (uid)
+            authLink = WebHelpers.generateAuthLink(btoa(uid));
+        
 
         res.render('login', {
             title: "Login", 
