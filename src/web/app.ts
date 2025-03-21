@@ -11,6 +11,7 @@ import path from "path";
 import http2Express from "http2-express-bridge";
 import cookieParser from 'cookie-parser';
 import { logRequest } from './middlewares/base';
+import bodyParserErrorHandler from 'express-body-parser-error-handler';
 
 // erghh...
 export class WebApp {
@@ -33,7 +34,11 @@ export class WebApp {
 
     middlewares() {
         this._express.use(cookieParser());
+        
         this._express.use(express.urlencoded({extended: true}));
+        this._express.use(express.json());
+        this._express.use(bodyParserErrorHandler());
+
         this._express.use(this._config.pathBase, express.static(path.resolve(__dirname, '..', '..', 'assets')));
         this._express.use(logRequest);
     }
