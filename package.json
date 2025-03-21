@@ -23,6 +23,7 @@
     "@types/winston": "^2.4.4",
     "cookie-parser": "^1.4.7",
     "express": "^4.21.1",
+    "express-body-parser-error-handler": "^1.0.7",
     "http2-express-bridge": "^1.0.7",
     "jsonwebtoken": "^9.0.2",
     "ncp": "^2.0.0",
