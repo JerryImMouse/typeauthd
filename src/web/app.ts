@@ -34,6 +34,7 @@ export class WebApp {
     middlewares() {
         this._express.use(cookieParser());
         this._express.use(express.urlencoded({extended: true}));
+        this._express.use(express.json());
         this._express.use(this._config.pathBase, express.static(path.resolve(__dirname, '..', '..', 'assets')));
         this._express.use(logRequest);
     }
