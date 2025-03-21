@@ -124,6 +124,10 @@ export class PostgresDatabase implements IDatabase {
         return this.selectOrOnly(table, {[key]: value});
     }
 
+    public selectAll<T>(table: string): Promise<T[] | null> {
+        return this.selectOrOnly(table, {});
+    }
+
     public async selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
@@ -136,6 +140,27 @@ export class PostgresDatabase implements IDatabase {
 
             if (result.rows.length > 0) {
                 return result.rows[0] as T;
+            }
+
+            return null;
+        } catch (err) {
+            this._handleError(query, err);
+            return null;
+        }
+    }
+
+    public async selectOr<T>(table: string, data: Record<string, string | number>): Promise<T[] | null> {
+        const columns = Object.keys(data);
+        const values = Object.values(data);
+
+        const conditions = columns.map((column, idx) => `${column} = $${idx + 1}`).join(" OR ");
+        const query = columns.length !== 0 ? `SELECT * FROM ${table} WHERE ${conditions}` : `SELECT * FROM ${table};`;
+
+        try {
+            const result = await this._connection.query(query, values);
+
+            if (result.rows.length > 0) {
+                return result.rows as T[];
             }
 
             return null;

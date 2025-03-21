@@ -2,8 +2,10 @@ export interface IDatabase {
     init(): Promise<boolean>;
     execute(sql: string, params: (string | number)[]): Promise<boolean>;
     select<T>(table: string, key: string, value: string | number): Promise<T | null>;
+    selectAll<T>(table: string): Promise<T[] | null>;
     selectLimitOffsetLike<T>(table: string, offset: number, limit: number, data: Record<string, string | number> | undefined = undefined): Promise<T[] | null>;
     selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null>
+    selectOr<T>(table: string, data: Record<string, string | number>): Promise<T[] | null>
     upsert(table: string, data: Record<string, string | number>): Promise<number | null>;
 
     delete(table: string, key: string, value: string | number): Promise<boolean>;

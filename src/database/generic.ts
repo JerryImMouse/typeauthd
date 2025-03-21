@@ -238,6 +238,17 @@ export class RecordExtra implements IRecordExtra {
         return new RecordExtra(db, res.record_id, res.json, res.id);
     }
 
+    public static async findAll<T extends IDatabase>(db: T): Promise<RecordExtra[]> {
+        const res = await db.selectAll<IRecordExtra>(RecordExtra._tableName);
+
+        const resObjects: RecordExtra[] = [];
+        res?.forEach(obj => {
+            resObjects.push(new RecordExtra(db, obj.record_id, obj.json, obj.id))
+        })
+
+        return resObjects;
+    }
+
     public static async create<T extends IDatabase>(db: T, record_id: number, json: string): Promise<RecordExtra> {
         const recordExists = await db.select<IRecordExtra>(RecordExtra._tableName, 'record_id', record_id);
 

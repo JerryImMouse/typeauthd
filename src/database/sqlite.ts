@@ -135,6 +135,10 @@ export class SqliteDatabase implements IDatabase {
         return this.selectOrOnly(table, {[key]: value});
     }
 
+    public selectAll<T>(table: string): Promise<T[] | null> {
+        return this.selectOr(table, {});
+    }
+
     public selectOrOnly<T>(table: string, data: Record<string, string | number>): Promise<T | null> {
         const columns = Object.keys(data);
         const values = Object.values(data);
@@ -150,6 +154,25 @@ export class SqliteDatabase implements IDatabase {
                 }
 
                 resolve(row ? row as T : null);
+            })
+        })
+    }
+
+    public selectOr<T>(table: string, data: Record<string, string | number>): Promise<T[] | null> {
+        const columns = Object.keys(data);
+        const values = Object.values(data);
+
+        const conditions = columns.map(column => `${column} = ?`).join(" OR ");
+        const query = columns.length !== 0 ? `SELECT * FROM ${table} WHERE ${conditions}` : `SELECT * FROM ${table};`;
+
+        return new Promise((resolve, reject) => {
+            this._connection.all(query, values, (err, rows) => {
+                if (!this._handleError(query, err)) {
+                    reject(false);
+                    return;
+                }
+
+                resolve(rows ? rows as T[] : null);
             })
         })
     }

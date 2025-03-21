@@ -4,9 +4,11 @@ import { findRecordByBody, findRecordByQuery, validateToken } from '../middlewar
 import { WebHelpers } from '../helpers';
 import { RecordExtendedRequest } from '../../types/web';
 import { Database, RecordExtra } from '../../database/generic';
+import { Logger } from '../../logging';
 
 const apiStuff = [checkApiToken, findRecordByQuery, validateToken];
 const dbImpl = Database.getDbImpl();
+const log = Logger.get();
 
 /// Here is the format
 /// getMETHODNAME - GET /api/METHODNAME
@@ -20,6 +22,9 @@ export class ApiController {
         router.get('/extra', [checkApiToken, findRecordByQuery], this.getExtraData);
         router.patch('/extra', [checkApiToken, findRecordByQuery], this.patchExtraData);
         router.post('/delete', [checkApiToken, findRecordByBody], this.postDelete);
+
+        router.delete('/each/extra', [checkApiToken], this.deleteEachExtraData);
+
         router.get('/link', this.getLink);
         return router;
     }
@@ -74,6 +79,7 @@ export class ApiController {
         }
 
         res.status(200).contentType('application/json').send(record.extra.json); // manually set content-type because our `json` field is a json str already
+        log.debug(`Returned extra data for ${record.discord_uid}`, JSON.parse(record.extra.json));
     }
 
     public static async patchExtraData(req: RecordExtendedRequest, res: Response) {
@@ -91,6 +97,35 @@ export class ApiController {
         record.extra.json = merged;
         
         await record.extra.save();
+        
+        res.status(200).send();
+        log.debug(`Set extra data for ${record.discord_uid}`, JSON.parse(record.extra.json));
+    }
+
+    public static async deleteEachExtraData(req: Request, res: Response) {
+        const fields = req.body['fields'] as string[] | undefined;
+        if (!fields) {
+            res.status(400).json({error: "Fields is not supplied"});
+            return;
+        }
+
+        const allRecords = await RecordExtra.findAll(dbImpl);
+
+        for (const record of allRecords) {
+            try {
+                const jsonData = JSON.parse(record.json);
+                
+                fields.forEach(field => {
+                    delete jsonData[field];
+                });
+
+                record.json = JSON.stringify(jsonData);
+                await record.save();
+            } catch (error) {
+                console.error("Failed to process record:", error);
+            }
+        }
+
         res.status(200).send();
     }
 
