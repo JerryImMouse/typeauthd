@@ -6,6 +6,7 @@ import { RecordExtendedRequest } from '../../types/web';
 import { Database, RecordExtra } from '../../database/generic';
 
 const apiStuff = [checkApiToken, findRecordByQuery, validateToken];
+const dbImpl = Database.getDbImpl();
 
 /// Here is the format
 /// getMETHODNAME - GET /api/METHODNAME
@@ -17,6 +18,7 @@ export class ApiController {
         router.get('/roles', apiStuff, this.getRoles);
         router.get('/guilds', apiStuff, this.getGuilds);
         router.get('/extra', [checkApiToken, findRecordByQuery], this.getExtraData);
+        router.patch('/extra', [checkApiToken, findRecordByQuery], this.patchExtraData);
         router.post('/delete', [checkApiToken, findRecordByBody], this.postDelete);
         router.get('/link', this.getLink);
         return router;
@@ -64,7 +66,7 @@ export class ApiController {
     public static async getExtraData(req: RecordExtendedRequest, res: Response) {
         const record = req.record!;
 
-        record.extra = await RecordExtra.find(Database.getDbImpl(), {record_id: record.id}) ?? undefined // record extended returns empty extras for perf
+        record.extra = await RecordExtra.find(dbImpl, {record_id: record.id}) ?? undefined // record extended returns empty extras for perf
 
         if (!record.extra) {
             res.status(404).json({error: "Extras Not Found"});
@@ -72,6 +74,24 @@ export class ApiController {
         }
 
         res.status(200).contentType('application/json').send(record.extra.json); // manually set content-type because our `json` field is a json str already
+    }
+
+    public static async patchExtraData(req: RecordExtendedRequest, res: Response) {
+        const record = req.record!;
+
+        record.extra = await RecordExtra.find(dbImpl, {record_id: record.id}) ?? undefined;
+
+        if (!record.extra) {
+            res.status(404).json({error: "Extras Not Found"});
+            return;
+        }
+
+        const original = JSON.parse(record.extra.json);
+        const merged = JSON.stringify({...original, ...req.body});
+        record.extra.json = merged;
+        
+        await record.extra.save();
+        res.status(200).send();
     }
 
     public static async getGuilds(req: RecordExtendedRequest, res: Response) {
