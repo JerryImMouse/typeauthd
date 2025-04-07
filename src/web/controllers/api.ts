@@ -155,6 +155,12 @@ export class ApiController {
     public static async postDelete(req: RecordExtendedRequest, res: Response) {
         const record = req.record!;
 
+        record.extra = await RecordExtra.find(dbImpl, {record_id: record.id}) ?? undefined;
+
+        if (record.extra) {
+            await record.extra.delete();
+        }
+
         await record.delete();
 
         res.status(200).send();
