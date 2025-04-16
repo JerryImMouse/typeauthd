@@ -18,7 +18,6 @@ const logger = Logger.get();
 /// Here is the format
 /// getPATH_PATH_... - GET /auth/PATH/PATH/...
 export class AuthController {
-    private static _logger = Logger.get();
 
     public static collectToRouter() {
         const router = Router();
@@ -62,6 +61,7 @@ export class AuthController {
             WebHelpers.respondErr(res, title, 400, desc, locale);
             return;
         }
+        const decodedState = atob(query.state);
 
         const tokenStruct = await WebHelpers.exchangeCode(query.code, req);
         if (!tokenStruct) {
@@ -71,6 +71,7 @@ export class AuthController {
             WebHelpers.respondErr(res, title, 400, desc, locale);
             return;
         }
+
 
         const identifyScopeData = await WebHelpers.identify(tokenStruct.access_token, req);
         if (!identifyScopeData) {
@@ -99,6 +100,25 @@ export class AuthController {
 
         // if we already have a record, just update tokens and leave credentials the same, so we avoid "reauthorization", this could be critical
         // for some apps
+        const foundByUid = await AuthorizedRecord.find(db, {uid: decodedState});
+        if (foundByUid) {
+            foundByUid.access_token = tokenStruct.access_token;
+            foundByUid.refresh_token = tokenStruct.refresh_token;
+            foundByUid.expires = tokenStruct.expires_in;
+            await foundByUid.save();
+
+            // https://github.com/maximal/http-267
+            const title = locales.loc('ok267', locale);
+            const desc = locales.loc('ok267_details', locale);
+
+            WebHelpers.respondErr(res, title, 267, desc, locale);
+            logger.warn("Authenticating again, credentials left untouched", {
+                uid: foundByUid.uid,
+                duid: foundByUid.discord_uid
+            });
+            return;
+        }
+
         const found = await AuthorizedRecord.find(db, {discord_uid: identifyScopeData.id});
         if (found) {
             found.access_token = tokenStruct.access_token;
@@ -111,14 +131,13 @@ export class AuthController {
             const desc = locales.loc('ok267_details', locale);
 
             WebHelpers.respondErr(res, title, 267, desc, locale);
-            this._logger.warn("Authenticating again, credentials left untouched", {
+            logger.warn("Authenticating again, credentials left untouched", {
                 uid: found.uid,
                 duid: found.discord_uid
             });
             return;
         }
-
-        const decodedState = atob(query.state);
+        
         const record = await AuthorizedRecord.create(
             db, 
             decodedState, 
