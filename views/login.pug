@@ -1,9 +1,9 @@
 extends layout.pug 
 
 block content 
-    h2.h2.center= auth_required 
-    if authLink 
-        p.p.center= auth_required_details
-        a(href= authLink style="font-size: 1.1em;").center.button= auth_btn 
+    h2.h2.center= model.mainText 
+    if model.authLink 
+        p.p.center= model.description
+        a(href= model.authLink style="font-size: 1.1em;").center.button= model.authBtnText 
     else 
-        p.p.center= auth_required_details
+        p.p.center= model.description

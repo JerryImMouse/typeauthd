@@ -5,6 +5,7 @@ import { AuthorizedRecord } from '../database/generic';
 import { DataParams, DiscordCodeQuery, DiscordCodeResponse, DiscordGuildMemberObject, DiscordPartialGuildObject, DiscordRawCodeQuery, DiscordUserObject, IdentifyQueryParams, LinkQueryParams, RolesQueryParams } from '../types/web';
 import { IDatabase } from '../types/database';
 import { LocaleManager } from '../locale';
+import { ErrorViewModel } from './models';
 
 const locales = LocaleManager.get();
 const config = Configration.get();
@@ -24,32 +25,41 @@ export class WebHelpers {
     
     /// Express helpers
     
-    public static respondErr(res: ExResponse, msg: string, code: number, help: string, locale: string | undefined = undefined) {
-        const errorText = locales.loc("error_title", locale ?? config.locale);
-
-        res.status(code).render('error', {
-            title: 'Error', 
-            statusCode: code, 
-            errorTitle: msg, 
-            errorDescription: help, 
-            errorText, 
-            assetPrefix: config.pathBase}
-        );
+    public static respondErr(
+        res: ExResponse, 
+        errTitleLocKey: string, 
+        statusCode: number, 
+        errDescLocKey: string, 
+        locale: string | undefined = undefined
+    ) {
+        new ErrorViewModel(
+            locales,
+            errDescLocKey,
+            errTitleLocKey,
+            statusCode,
+            undefined,
+            undefined,
+            locale,
+        ).respond(res.status(statusCode))
     }
 
-    public static respondErrWithLogs(res: ExResponse, msg: string, code: number, help: string, id: string, data: string, locale: string | undefined = undefined) {
-        const errorText = locales.loc("error_title", locale ?? config.locale);
-
-        res.status(code).render('error', {
-            title: "Error", 
-            statusCode: code, 
-            errorId: id, 
-            errorTitle: msg, 
-            errorDescription: help, 
-            errorText, 
-            logsLink: `${config.pathBase}logs?b64=${btoa(data)}`,
-            assetPrefix: config.pathBase
-        });
+    public static respondErrWithLogs(
+        res: ExResponse, 
+        errTitleLocKey: string, 
+        statusCode: number, 
+        errDescLocKey: string, 
+        errorId: string, 
+        data: string, locale: string | undefined = undefined
+    ) {
+        new ErrorViewModel(
+            locales, 
+            errDescLocKey,
+            errTitleLocKey,
+            statusCode, 
+            `${config.pathBase}logs?b64=${btoa(data)}`, 
+            errorId, 
+            locale
+        ).respond(res.status(statusCode))
         
         Logger.get().error("500 - Server Error", {err: data});
     }
