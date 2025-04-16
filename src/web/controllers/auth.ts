@@ -3,7 +3,7 @@ import { WebHelpers } from '../helpers';
 import { AuthorizedRecord, Database } from '../../database/generic';
 import { Logger } from '../../logging';
 import { LocaleManager } from '../../locale';
-import { LocaleExtendedRequest } from '../../types/web';
+import { IState, LocaleExtendedRequest } from '../../types/web';
 import { getLocale } from '../middlewares/auth';
 import { Configration } from '../../config';
 import { randomUUID } from 'crypto';
@@ -50,18 +50,25 @@ export class AuthController {
         );
     }
 
-    public static async getLogin_Cb(req: LocaleExtendedRequest, res: Response) {
-        const locale = req.locale!;
+    public static async getLogin_Cb(req: Request, res: Response) {
 
         const query = WebHelpers.parseCodeQuery(req);
         if (!query) {
-            const title = locales.loc("invalid_code", locale);
-            const desc = locales.loc("invalid_code_details", locale);
+            const title = locales.loc("invalid_code", config.locale);
+            const desc = locales.loc("invalid_code_details", config.locale);
 
-            WebHelpers.respondErr(res, title, 400, desc, locale);
+            WebHelpers.respondErr(res, title, 400, desc, config.locale);
             return;
         }
-        const decodedState = atob(query.state);
+        
+        const stateBuf = Buffer.from(query.state, 'base64').toString('utf-8');
+        const decodedState: IState = JSON.parse(stateBuf);
+        if (!decodedState.uid) {
+            WebHelpers.respondErr(res, "Corrupted state", 400, "Corrupted state, try reauthorizing");
+            return;
+        }
+        
+        const locale = decodedState.loc ?? config.locale;
 
         const tokenStruct = await WebHelpers.exchangeCode(query.code, req);
         if (!tokenStruct) {
@@ -100,7 +107,7 @@ export class AuthController {
 
         // if we already have a record, just update tokens and leave credentials the same, so we avoid "reauthorization", this could be critical
         // for some apps
-        const foundByUid = await AuthorizedRecord.find(db, {uid: decodedState});
+        const foundByUid = await AuthorizedRecord.find(db, {uid: decodedState.uid});
         if (foundByUid) {
             foundByUid.access_token = tokenStruct.access_token;
             foundByUid.refresh_token = tokenStruct.refresh_token;
@@ -140,7 +147,7 @@ export class AuthController {
         
         const record = await AuthorizedRecord.create(
             db, 
-            decodedState, 
+            decodedState.uid, 
             identifyScopeData.id, 
             tokenStruct.access_token, 
             tokenStruct.refresh_token, 
