@@ -106,5 +106,10 @@ export interface LocaleExtendedRequest extends ExRequest {
     locale?: string
 }
 
+export interface IState {
+    loc?: string,
+    uid: string,
+}
+
 export type TypeAuthDExtendedRequest = RecordExtendedRequest | LocaleExtendedRequest;
 export type AuthServer = Server | Http2SecureServer
