@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import { checkApiToken } from '../middlewares/auth';
 import { findRecordByBody, findRecordByQuery, validateToken } from '../middlewares/api';
 import { WebHelpers } from '../helpers';
-import { RecordExtendedRequest } from '../../types/web';
+import { IState, RecordExtendedRequest } from '../../types/web';
 import { Database, RecordExtra } from '../../database/generic';
 import { Logger } from '../../logging';
 
@@ -148,7 +148,16 @@ export class ApiController {
             return;
         }
 
-        const link = WebHelpers.generateAuthLink(btoa(query.uid));
+        const locale = req.query.loc?.toString() ?? undefined;
+
+        const state: IState = {
+            loc: locale,
+            uid: query.uid,
+        };
+
+        const base64String = Buffer.from(JSON.stringify(state), 'utf-8').toString('base64');
+
+        const link = WebHelpers.generateAuthLink(base64String);
         res.status(200).json({link});
     }
 
