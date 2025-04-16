@@ -1,10 +1,10 @@
 extends layout.pug 
 
 block header
-    link(rel="stylesheet", href=assetPrefix + "css/admin.css")
+    link(rel="stylesheet", href=model.assetPrefix + "css/admin.css")
 
 block content
-    h2.h2= login_title
+    h2.h2= model.loginTitle
     form(action="login", method="post").form
-        input(id="api_token" name="token" type="password" placeholder= login_token_name required).input.center-self
-        input(type="submit" value= login_submit_btn style="margin-top: 10px;").center.button
+        input(id="api_token" name="token" type="password" placeholder= model.loginTokenName required).input.center-self
+        input(type="submit" value= model.loginSubmitBtnText style="margin-top: 10px;").center.button

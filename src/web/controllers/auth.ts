@@ -8,6 +8,7 @@ import { getLocale } from '../middlewares/auth';
 import { Configration } from '../../config';
 import { randomUUID } from 'crypto';
 import { validateUuid } from '../../validation/uuid';
+import { ErrorViewModel, LoginViewModel, SuccessViewModel } from '../models';
 
 // database should be already initialized here
 const db = Database.getDbImpl();
@@ -18,7 +19,6 @@ const logger = Logger.get();
 /// Here is the format
 /// getPATH_PATH_... - GET /auth/PATH/PATH/...
 export class AuthController {
-
     public static collectToRouter() {
         const router = Router();
         router.get('/login', getLocale, AuthController.getLogin);
@@ -28,12 +28,7 @@ export class AuthController {
 
     public static async getLogin(req: LocaleExtendedRequest, res: Response) {
         let uid = req.query['uid']?.toString() ?? undefined;
-
         const locale = req.locale!;
-        const auth_required = locales.loc('auth_required', locale);
-        const auth_required_details = uid ? locales.loc('auth_required_details_uid', locale) : locales.loc('auth_required_details', locale); 
-        const auth_btn = locales.loc('auth_btn', locale);
-        
         let authLink: string | undefined;
         if (uid) {
             if (validateUuid(uid)) {
@@ -41,13 +36,11 @@ export class AuthController {
             }
         }
 
-        res.render('login', {
-            title: "Login", 
-            auth_required, 
-            auth_required_details, 
-            authLink, auth_btn, 
-            assetPrefix: config.pathBase}
-        );
+        new LoginViewModel(
+            locales,
+            authLink,
+            locale,
+        ).respond(res.status(200));
     }
 
     public static async getLogin_Cb(req: LocaleExtendedRequest, res: Response) {
@@ -55,20 +48,21 @@ export class AuthController {
 
         const query = WebHelpers.parseCodeQuery(req);
         if (!query) {
-            const title = locales.loc("invalid_code", locale);
-            const desc = locales.loc("invalid_code_details", locale);
-
-            WebHelpers.respondErr(res, title, 400, desc, locale);
+            WebHelpers.respondErr(res, "invalid_code", 400, "invalid_code_details", locale);
             return;
         }
+
         const decodedState = atob(query.state);
 
         const tokenStruct = await WebHelpers.exchangeCode(query.code, req);
         if (!tokenStruct) {
-            const title = locales.loc("unable_exchange_code", locale);
-            const desc = locales.loc("unable_exchange_code_details", locale);
-
-            WebHelpers.respondErr(res, title, 400, desc, locale);
+            WebHelpers.respondErr(
+                res, 
+                "unable_exchange_code", 
+                400, 
+                "unable_exchange_code_details", 
+                locale
+            );
             return;
         }
 
@@ -108,10 +102,7 @@ export class AuthController {
             await foundByUid.save();
 
             // https://github.com/maximal/http-267
-            const title = locales.loc('ok267', locale);
-            const desc = locales.loc('ok267_details', locale);
-
-            WebHelpers.respondErr(res, title, 267, desc, locale);
+            WebHelpers.respondErr(res, "ok267", 267, "ok267_details", locale);
             logger.warn("Authenticating again, credentials left untouched", {
                 uid: foundByUid.uid,
                 duid: foundByUid.discord_uid
@@ -127,10 +118,7 @@ export class AuthController {
             await found.save();
 
             // https://github.com/maximal/http-267
-            const title = locales.loc('ok267', locale);
-            const desc = locales.loc('ok267_details', locale);
-
-            WebHelpers.respondErr(res, title, 267, desc, locale);
+            WebHelpers.respondErr(res, "ok267", 267, "ok267_details", locale);
             logger.warn("Authenticating again, credentials left untouched", {
                 uid: found.uid,
                 duid: found.discord_uid
@@ -163,15 +151,10 @@ export class AuthController {
             await record.save();
         }
 
-        const auth_success = locales.loc('auth_success', locale);
-        const auth_success_details = locales.loc('auth_success_details', locale);
-
-        res.render('success', {
-            title: "Success", 
-            auth_success, 
-            auth_success_details, 
-            assetPrefix: config.pathBase}
-        );
+        new SuccessViewModel(
+            locales,
+            locale
+        ).respond(res.status(200));
 
         logger.debug(`Successfully authenticated new record`, {
             discord_uid: identifyScopeData.id,
