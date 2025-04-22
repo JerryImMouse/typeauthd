@@ -42,8 +42,8 @@ export class AdminController {
             uid: searchText
         } : undefined);
 
-        const nextPageLink = `${config.pathBase}/admin/panel?search=${searchText}&page=${page+1}&loc=${locale ?? config.locale}`;
-        const prevPageLink = `${config.pathBase}/admin/panel?search=${searchText}&page=${page-1 < 1 ? 1 : page-1}&loc=${locale ?? config.locale}`;
+        const nextPageLink = `${config.pathBase}admin/panel?search=${searchText}&page=${page+1}&loc=${locale ?? config.locale}`;
+        const prevPageLink = `${config.pathBase}admin/panel?search=${searchText}&page=${page-1 < 1 ? 1 : page-1}&loc=${locale ?? config.locale}`;
 
         const panel_title = locales.loc('panel_title', locale);
         const panel_submit_btn = locales.loc('panel_submit_btn', locale);
@@ -103,12 +103,12 @@ export class AdminController {
     public static async postLogin(req: Request, res: Response) {
         const token = req.body['token'];
         if (!token) {
-            res.redirect(`${config.pathBase}/admin/login`);
+            res.redirect(`${config.pathBase}admin/login`);
             return;
         }
 
         if (config.apiSecret !== token) {
-            res.redirect(`${config.pathBase}/admin/login`);
+            res.redirect(`${config.pathBase}admin/login`);
             return;
         }
 
