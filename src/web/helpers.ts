@@ -15,6 +15,21 @@ const CLIENT_TOKEN = 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toS
 
 export const DISCORD_API_URL = "https://discord.com/api/v10"
 
+export async function safeResponseJson<T = any>(response: Response, label: string): Promise<T | null> {
+    const text = await response.text();
+    try {
+        return JSON.parse(text) as T;
+    } catch {
+        const isHtml = /^\s*</.test(text);
+        Logger.get().warn(`${label}: Expected JSON but received ${isHtml ? 'HTML' : 'non-JSON'} (status ${response.status})`, {
+            status: response.status,
+            contentType: response.headers.get('content-type'),
+            bodyPreview: text.slice(0, 512),
+        });
+        return null;
+    }
+}
+
 export enum SearchMethod {
     DISCORD = 'discord',
     UID = 'uid'
@@ -82,11 +97,11 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            WebHelpers.handleDiscordError(response, '[DISCORD]: Error during code exchange.', req);
+            await WebHelpers.handleDiscordError(response, '[DISCORD]: Error during code exchange.', req);
             return null;
         }
 
-        const tokenData: DiscordCodeResponse = await response.json();
+        const tokenData = await safeResponseJson<DiscordCodeResponse>(response, '[DISCORD] code exchange response');
         return tokenData;
     }
 
@@ -99,11 +114,11 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, '[DISCORD] Error fetching identify scope.', req);
+            await this.handleDiscordError(response, '[DISCORD] Error fetching identify scope.', req);
             return null;
         }
 
-        return await response.json();
+        return await safeResponseJson<DiscordUserObject>(response, '[DISCORD] identify response');
     }
 
     public static async guildMember(access_token: string, guildId: string, req: ExRequest): Promise<DiscordGuildMemberObject | null> {
@@ -116,11 +131,11 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, `[DISCORD] Failed to retrieve guild member.`, req);
+            await this.handleDiscordError(response, `[DISCORD] Failed to retrieve guild member.`, req);
             return null;
         }
 
-        return response.json();
+        return safeResponseJson<DiscordGuildMemberObject>(response, '[DISCORD] guild member response');
     }
 
     public static async guilds(access_token: string, req: ExRequest): Promise<DiscordPartialGuildObject[] | null> {
@@ -133,11 +148,11 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, `[DISCORD] Failed to retrieve user guilds.`, req);
+            await this.handleDiscordError(response, `[DISCORD] Failed to retrieve user guilds.`, req);
             return null;
         }
 
-        return response.json();
+        return safeResponseJson<DiscordPartialGuildObject[]>(response, '[DISCORD] guilds response');
     }
 
     public static async ensureToken(record: AuthorizedRecord, req: ExRequest, httpCheck: boolean = false): Promise<boolean> {
@@ -186,11 +201,12 @@ export class WebHelpers {
         });
 
         if (!response.ok) {
-            this.handleDiscordError(response, `[DISCORD] Failed to refresh Discord Token for ${record.uid}|${record.discord_uid}.`, req);
+            await this.handleDiscordError(response, `[DISCORD] Failed to refresh Discord Token for ${record.uid}|${record.discord_uid}.`, req);
             return false;
         }
 
-        const data = await response.json() as DiscordCodeResponse;
+        const data = await safeResponseJson<DiscordCodeResponse>(response, `[DISCORD] refresh token response for ${record.uid}`);
+        if (!data) return false;
         record.access_token = data.access_token;
         record.expires = data.expires_in;
         record.refresh_token = data.refresh_token;
@@ -201,9 +217,9 @@ export class WebHelpers {
 
 
     public static async handleDiscordError(res: Response, msg: string, req: ExRequest) {
-        const json = await res.json();
+        const json = await safeResponseJson(res, msg);
         const data = {
-            res: json,
+            res: json ?? '[non-JSON body, see previous warning]',
             url: req.url,
             ip: req.ip,
         }

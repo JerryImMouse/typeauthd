@@ -78,8 +78,19 @@ export class ApiController {
             return;
         }
 
+        let parsed: object | undefined;
+        try {
+            parsed = JSON.parse(record.extra.json);
+        } catch {
+            log.warn(`Corrupted extra data for ${record.discord_uid}, unable to parse as JSON`, {
+                bodyPreview: record.extra.json?.slice(0, 512)
+            });
+            res.status(500).json({error: "Stored extra data is corrupted"});
+            return;
+        }
+
         res.status(200).contentType('application/json').send(record.extra.json); // manually set content-type because our `json` field is a json str already
-        log.debug(`Returned extra data for ${record.discord_uid}`, JSON.parse(record.extra.json));
+        log.debug(`Returned extra data for ${record.discord_uid}`, parsed);
     }
 
     public static async patchExtraData(req: RecordExtendedRequest, res: Response) {
@@ -92,7 +103,26 @@ export class ApiController {
             return;
         }
 
-        const original = JSON.parse(record.extra.json);
+        let original: object;
+        try {
+            original = JSON.parse(record.extra.json);
+        } catch {
+            log.warn(`Corrupted extra data for ${record.discord_uid} during PATCH, unable to parse as JSON`, {
+                bodyPreview: record.extra.json?.slice(0, 512)
+            });
+            res.status(500).json({error: "Stored extra data is corrupted"});
+            return;
+        }
+
+        if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
+            log.warn(`Invalid PATCH body for ${record.discord_uid}: expected JSON object`, {
+                bodyType: typeof req.body,
+                bodyPreview: JSON.stringify(req.body)?.slice(0, 512)
+            });
+            res.status(400).json({error: "Request body must be a JSON object"});
+            return;
+        }
+
         const merged = JSON.stringify({...original, ...req.body});
         record.extra.json = merged;
         

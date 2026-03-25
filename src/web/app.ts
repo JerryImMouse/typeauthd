@@ -1,5 +1,6 @@
-import express, { Router } from 'express';
+import express, { NextFunction, Request, Response, Router } from 'express';
 import { Configration } from '../config';
+import { Logger } from '../logging';
 
 // controllers
 import { AuthController } from "./controllers/auth";
@@ -11,9 +12,7 @@ import path from "path";
 import http2Express from "http2-express-bridge";
 import cookieParser from 'cookie-parser';
 import { logRequest } from './middlewares/base';
-import bodyParserErrorHandler from 'express-body-parser-error-handler';
 
-// erghh...
 export class WebApp {
     private _express: express.Application;
     private _pathBaseRouter: express.Router;
@@ -40,8 +39,6 @@ export class WebApp {
         
         this._express.use(this._config.pathBase, express.static(path.resolve(__dirname, '..', '..', 'assets')));
         this._express.use(logRequest);
-        
-        this._express.use(bodyParserErrorHandler());
     }
 
     controllers() {
@@ -52,6 +49,19 @@ export class WebApp {
         this._pathBaseRouter.use('/admin', AdminController.collectToRouter());
 
         this._express.use(this._config.pathBase, this._pathBaseRouter);
+
+        // Global error handler
+        this._express.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+            const logger = Logger.get();
+            logger.error('Unhandled error in request pipeline', {
+                message: err.message,
+                stack: err.stack,
+                name: err.name,
+            });
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
     }
 
     application() {
