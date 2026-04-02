@@ -10,6 +10,7 @@ import { LocaleExtendedRequest } from '../../types/web';
 import { verifyJWT } from '../middlewares/admin';
 import { IAuthorizedRecord } from '../../types/database';
 import { Logger } from '../../logging';
+import { AdminLoginViewModel, AdminPanelViewModel } from '../models';
 
 const config = Configration.get();
 const locales = LocaleManager.get();
@@ -45,21 +46,14 @@ export class AdminController {
         const nextPageLink = `${config.pathBase}admin/panel?search=${searchText}&page=${page+1}&loc=${locale ?? config.locale}`;
         const prevPageLink = `${config.pathBase}admin/panel?search=${searchText}&page=${page-1 < 1 ? 1 : page-1}&loc=${locale ?? config.locale}`;
 
-        const panel_title = locales.loc('panel_title', locale);
-        const panel_submit_btn = locales.loc('panel_submit_btn', locale);
-        const panel_delete_btn = locales.loc('panel_delete_btn', locale);
-
-        res.render('admin_panel', {
-            records,
-            title: "Admin",
-            panel_title,
-            panel_submit_btn,
-            panel_delete_btn,
-            next_page: nextPageLink,
-            prev_page: prevPageLink,
-            cur_page: page,
-            assetPrefix: config.pathBase
-        });
+        new AdminPanelViewModel(
+            locales, 
+            page, 
+            prevPageLink, 
+            nextPageLink, 
+            records, 
+            locale
+        ).respond(res);
     }
 
     public static async postDelete(req: Request, res: Response) {
@@ -86,18 +80,10 @@ export class AdminController {
     }
 
     public static async getLogin(req: LocaleExtendedRequest, res: Response) {
-        // locales
-        const locale = req.locale!;
-        const login_title = locales.loc('login_title', locale);
-        const login_submit_btn = locales.loc('login_submit_btn', locale);
-        const login_token_name = locales.loc('login_token_name', locale);
-
-        res.render('admin_login', {
-            login_title,
-            login_token_name,
-            login_submit_btn,
-            assetPrefix: config.pathBase
-        });
+        new AdminLoginViewModel(
+            locales,
+            req.locale
+        ).respond(res.status(200));
     }
 
     public static async postLogin(req: Request, res: Response) {

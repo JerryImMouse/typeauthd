@@ -1,10 +1,10 @@
 extends layout.pug 
 
 block content
-    h2.h2.center= errorText
-    p.p.center= errorTitle + " - " + statusCode 
-    p.p.center= errorDescription
-    if logsLink
-        p.p.center= "Your error ID: " + errorId
-        a(href= logsLink style="font-size: 1.1em;").center.button= "Error Logs"
+    h2.h2.center= model.errorText
+    p.p.center= model.errorTitle + " - " + model.statusCode 
+    p.p.center= model.errorDescription
+    if model.logsLink
+        p.p.center= "Your error ID: " + model.errorId
+        a(href= model.logsLink style="font-size: 1.1em;").center.button= "Logs"
         
